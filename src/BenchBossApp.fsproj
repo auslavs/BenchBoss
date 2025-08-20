@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="index.html" />
+    <Compile Include="BenchBoss\Types.fs" />
+    <Compile Include="BenchBoss\Store.fs" />
+    <Compile Include="BenchBoss\State.fs" />
+    <Compile Include="BenchBoss\ScoreModal\Common.fs" />
+    <Compile Include="BenchBoss\ScoreModal\OurTeam.fs" />
+    <Compile Include="BenchBoss\ScoreModal\OpposingTeam.fs" />
+    <Compile Include="BenchBoss\Layout.fs" />
+    <Compile Include="BenchBoss\GamePage.fs" />
+    <Compile Include="BenchBoss\ManageTeamPage.fs" />
+    <Compile Include="BenchBoss\BenchBoss.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Feliz" Version="2.9.0" />
+    <PackageReference Include="Feliz.UseElmish" Version="2.5.0" />
+    <PackageReference Include="Fable.React" Version="9.4.0" />
+    <PackageReference Include="Thoth.Json" Version="10.4.1" />
+  </ItemGroup>
+</Project>
