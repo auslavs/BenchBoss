@@ -11,14 +11,17 @@ module GamePage =
     Html.div [
       prop.className ("flex items-center justify-between gap-2 " + extra)
       prop.children [
-        Html.span [ prop.className "font-medium"; prop.text p.Name ]
-        Html.span [ 
-          prop.className "text-sm text-slate-500"
-          prop.text $"P{nbsp}%s{Time.formatMMSS p.PlayedSeconds}"
-        ]
-        Html.span [ 
-          prop.className "text-sm text-slate-500"
-          prop.text $"B{nbsp}%s{Time.formatMMSS p.BenchedSeconds}"
+        Html.span [ prop.className "font-medium text-xl"; prop.text p.Name ]
+        Html.div [
+          prop.className "flex flex-col items-end text-base text-slate-500"
+          prop.children [
+            Html.span [ 
+              prop.text $"P{nbsp}%s{Time.formatMMSS p.PlayedSeconds}"
+            ]
+            Html.span [ 
+              prop.text $"B{nbsp}%s{Time.formatMMSS p.BenchedSeconds}"
+            ]
+          ]
         ]
       ]
     ]
@@ -63,9 +66,10 @@ module GamePage =
 
     Html.div [
       prop.className [
-        "w-full h-16 border-2 border-gray-300 rounded-lg flex items-center justify-center bg-green-50 hover:bg-green-100 transition-colors"
-        if playerOpt.IsSome then "cursor-move"
-        else "cursor-pointer border-dashed"
+        "w-full h-16 rounded-lg flex items-center justify-center bg-green-50 hover:bg-green-100 transition-colors"
+        match playerOpt with
+        | Some _ -> "cursor-move"
+        | None -> "cursor-pointer border-2 border-gray-300 border-dashed"
       ]
       prop.onDrop onDrop
       prop.onDragOver onDragOver
