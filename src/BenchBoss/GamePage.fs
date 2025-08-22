@@ -185,7 +185,7 @@ module GamePage =
                   prop.className "flex flex-col sm:flex-row sm:flex-wrap gap-4 justify-center items-start min-h-64 z-10 relative"
                   prop.children ( fieldPlayers |> Array.mapi (fun i playerOpt ->
                       Html.div [
-                        prop.className "w-full sm:w-auto sm:min-w-48 sm:max-w-xs flex-1 relative z-10"
+                        prop.className "w-full sm:w-auto sm:min-w-48 sm:max-w-xs sm:flex-[0_1_48%] relative z-10"
                         prop.children [
                           fieldSlot i playerOpt dispatch
                         ]
