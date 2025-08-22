@@ -38,7 +38,7 @@ module Component =
 
         ScoreModal.OurTeam.View(
           isHomeTeamModalOpen,
-          state.GamePlayers,
+          state.Game.Players,
           hideModal,
           goalUs
         )

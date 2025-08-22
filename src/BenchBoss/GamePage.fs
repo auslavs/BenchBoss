@@ -88,7 +88,7 @@ module GamePage =
     ]
 
   [<ReactComponent>]
-  let private BenchArea (benchPlayers: PlayerId list) (allPlayers: GamePlayer list) (dispatch: Msg -> unit) =
+  let private BenchArea (allPlayers: GamePlayer list) (dispatch: Msg -> unit) =
 
     let playerIsHovering, setPlayerIsHovering = React.useState false
 
@@ -115,8 +115,7 @@ module GamePage =
       ev.preventDefault()
       ev.dataTransfer.dropEffect <- "move"
 
-    let playerById = allPlayers |> List.map (fun p -> p.Id, p) |> Map.ofList
-    let benchPlayerObjs = benchPlayers |> List.choose (fun playerId -> playerById |> Map.tryFind playerId)
+    let benchPlayerObjs = allPlayers |> List.filter (fun p -> p.InGameStatus = OnBench)
 
     React.fragment [
       Html.h3 [
@@ -164,8 +163,12 @@ module GamePage =
     ]
 
   let render (state: State) (dispatch: Msg -> unit) =
-    let playerById = state.GamePlayers |> List.map (fun p -> p.Id, p) |> Map.ofList
-    let fieldPlayers = state.FieldSlots |> Array.map (Option.bind (fun id -> playerById |> Map.tryFind id))
+    let onFieldPlayers = state.Game.Players |> List.filter (fun p -> p.InGameStatus = OnField)
+    // For now, create dummy field slots to maintain the 4-slot layout
+    let fieldPlayers = 
+      let playerArray = Array.create 4 None
+      onFieldPlayers |> List.iteri (fun i p -> if i < 4 then playerArray[i] <- Some p)
+      playerArray
     
     Html.div [
       prop.className "flex-1 p-4 bg-gradient-to-b from-green-50 to-blue-50"
@@ -204,7 +207,7 @@ module GamePage =
             Html.div [
               prop.className "mt-8"
               prop.children [
-                BenchArea state.Bench state.GamePlayers dispatch
+                BenchArea state.Game.Players dispatch
               ]
             ]
           ]

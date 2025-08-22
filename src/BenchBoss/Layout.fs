@@ -116,7 +116,7 @@ module Layout =
             ]
             Html.div [
               prop.className "bg-purple-200 text-3xl font-bold w-full text-center";
-              prop.text (Time.formatMMSS state.ElapsedSecondsInHalf)
+              prop.text (Time.formatMMSS (State.getElapsedSecondsInHalf state))
             ]
             Html.div [
               prop.className "bg-purple-200 text-3xl font-bold w-full text-center";
@@ -125,8 +125,8 @@ module Layout =
                   prop.className "flex items-center justify-center gap-3";
                   prop.children [
                     // Play/Pause toggle button
-                    match state.Timer with
-                    | Running -> pauseButton pauseTimer
+                    match State.getTimerStatus state with
+                    | Running _ -> pauseButton pauseTimer
                     | _ -> playButton startTimer
                     // Stop button
                     Html.button [

@@ -6,7 +6,7 @@ open BenchBossApp.Components.BenchBoss.Types
 module ManageTeamPage =
 
   let private renderPlayerRow (state: State) (dispatch: Msg -> unit) (player: TeamPlayer) =
-    let isAvailableForGame = state.GamePlayers |> List.map _.Id |> List.contains player.Id
+    let isAvailableForGame = state.Game.Players |> List.map _.Id |> List.contains player.Id
 
     Html.div [
       prop.className "flex items-center justify-between p-4 bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-200"
@@ -140,10 +140,10 @@ module ManageTeamPage =
       ]
 
   let private renderSummary (state: State) =
-    let fieldPlayers = state.FieldSlots |> Array.choose id |> Array.length
-    let benchPlayers = state.Bench.Length
+    let fieldPlayers = state.Game.Players |> List.filter (fun p -> p.InGameStatus = OnField) |> List.length
+    let benchPlayers = state.Game.Players |> List.filter (fun p -> p.InGameStatus = OnBench) |> List.length
     let totalPlayers = state.TeamPlayers.Length
-    let availableForGame = state.GamePlayers.Length
+    let availableForGame = state.Game.Players.Length
 
     Html.div [
       prop.className "bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg p-6 text-white"

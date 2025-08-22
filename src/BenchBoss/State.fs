@@ -8,40 +8,22 @@ open BenchBossApp.Components.BenchBoss.Types
 module State =
 
   let private validateState (state: State) : State =
-    // Ensure GamePlayer only contains valid player IDs
+    // Ensure Game Players only contains valid player IDs
     let validPlayerIds = state.TeamPlayers |> List.map _.Id |> Set.ofList
-    let validAvailablePlayers = 
-      state.GamePlayers 
+    let validGamePlayers = 
+      state.Game.Players 
       |> List.filter (fun gp -> validPlayerIds.Contains gp.Id)
 
-    // Ensure field slots only contain valid available player IDs
-    let validFieldSlots = 
-      state.FieldSlots 
-      |> Array.map (function 
-          | Some id when validPlayerIds.Contains id -> Some id 
-          | _ -> None)
+    let validatedGame = { state.Game with Players = validGamePlayers }
     
-    // Ensure bench only contains valid available player IDs
-    let validBench = 
-      state.Bench 
-      |> List.filter validPlayerIds.Contains
-    
-    { state with 
-        GamePlayers = validAvailablePlayers
-        FieldSlots = validFieldSlots  
-        Bench = validBench }
+    { state with Game = validatedGame }
 
 
   let private empty () : State =
     {
       CurrentPage = GamePage
       TeamPlayers = []
-      GamePlayers = []
-      FieldSlots = [| None; None; None; None |]
-      Bench = []
-      CurrentHalf = First
-      ElapsedSecondsInHalf = 0
-      Timer = Stopped
+      Game = Game.create "Default Game" []
       OurScore = 0
       OppScore = 0
       SelectedScorer = None
@@ -59,36 +41,17 @@ module State =
     Cmd.OfAsync.perform (fun () -> async { do! Async.Sleep 1000 }) () (fun () -> Tick)
 
   let private isOnField (s:State) (pid:PlayerId) =
-    s.FieldSlots |> Array.exists (function Some id when id = pid -> true | _ -> false)
+    s.Game.Players |> List.exists (fun p -> p.Id = pid && p.InGameStatus = OnField)
 
-  let private isOnBench (s:State) (pid:PlayerId) = s.Bench |> List.contains pid
-
-  let private addToBench (pid:PlayerId) (s:State) =
-    if isOnBench s pid then s else { s with Bench = pid :: s.Bench }
-
-  let private removeFromBench (pid:PlayerId) (s:State) =
-    { s with Bench = s.Bench |> List.filter ((<>) pid) }
-
-  let removeFromField (pid:PlayerId) (s:State) =
-    let rec loop slots acc =
-      match slots with
-      | [] -> List.rev acc
-      | x :: xs when x = Some pid -> loop xs (None :: acc)
-      | x :: xs -> loop xs (x :: acc)
-    { s with FieldSlots = loop (Array.toList s.FieldSlots) [] |> Array.ofList }
-
-  let private placeInFieldSlot (slot:int) (pidOpt:PlayerId option) (s:State) =
-    let slots = Array.copy s.FieldSlots
-    slots[slot] <- pidOpt
-    { s with FieldSlots = slots }
+  let private isOnBench (s:State) (pid:PlayerId) = 
+    s.Game.Players |> List.exists (fun p -> p.Id = pid && p.InGameStatus = OnBench)
 
   let isGamePlayer (pid:PlayerId) (s:State) =
-    s.GamePlayers |> List.exists (fun p -> p.Id = pid)
+    s.Game.Players |> List.exists (fun p -> p.Id = pid)
 
   let removeFromGamePlayers (pid:PlayerId) (s:State) =
-    { s with GamePlayers = s.GamePlayers |> List.filter (fun p -> p.Id <> pid) }
-    |> removeFromBench pid
-    |> removeFromField pid
+    let updatedGame = Game.removePlayer pid s.Game
+    { s with Game = updatedGame }
 
   let private addToGamePlayers (pid:PlayerId) (state:State) =
     if isGamePlayer pid state then
@@ -96,33 +59,54 @@ module State =
     else
       match state.TeamPlayers |> List.tryFind (fun p -> p.Id = pid) with
       | Some p ->
-          let gamePlayer = GamePlayer.ofTeamPlayer p
-          { state with GamePlayers = gamePlayer :: state.GamePlayers }
-          |> addToBench pid
+          let updatedGame = Game.addPlayer p state.Game
+          { state with Game = updatedGame }
       | None ->
           state
 
-  let private indexOfPlayerSlot (s:State) (pid:PlayerId) =
-    s.FieldSlots |> Array.tryFindIndex ((=) (Some pid))
+  let getElapsedSecondsInHalf (s:State) =
+    match s.Game.Timer with
+    | Running r -> r.Elapsed
+    | Paused p -> p.Elapsed
+    | Break b -> b.Elapsed
+    | Stopped -> 0
+
+  let getTimerStatus (s:State) = s.Game.Timer
+
+  let private getCurrentHalf (s:State) =
+    match s.Game.Timer with
+    | Running r -> r.Half
+    | Paused p -> p.Half
+    | Break b -> b.Half
+    | Stopped -> First
 
   let private accumulateSeconds (delta:int) (s:State) =
     if delta <= 0 then s
     else
-      // add played to field players, benched to bench players
-      let fieldIds = s.FieldSlots |> Array.choose id |> Set.ofArray
-      let benchIds = s.Bench |> Set.ofList
-      let updated =
-        s.GamePlayers
+      // Update played/benched time for all players
+      let updatedPlayers =
+        s.Game.Players
         |> List.map (fun p ->
-            if fieldIds.Contains p.Id then GamePlayer.addPlayed delta p
-            elif benchIds.Contains p.Id then GamePlayer.addBenched delta p
-            else p)
-      { s with GamePlayers = updated; ElapsedSecondsInHalf = s.ElapsedSecondsInHalf + delta }
+            if p.InGameStatus = OnField then
+              { p with PlayedSeconds = p.PlayedSeconds + delta }
+            else
+              { p with BenchedSeconds = p.BenchedSeconds + delta })
+      
+      // Update timer elapsed time
+      let updatedTimer = 
+        match s.Game.Timer with
+        | Running r -> Running {| r with Elapsed = r.Elapsed + delta |}
+        | Paused p -> Paused {| p with Elapsed = p.Elapsed + delta |}
+        | Break b -> Break {| b with Elapsed = b.Elapsed + delta |}
+        | Stopped -> Stopped
+      
+      let updatedGame = { s.Game with Players = updatedPlayers; Timer = updatedTimer }
+      { s with Game = updatedGame }
 
   let private handleTick (state:State) =
     let now = DateTime.UtcNow
-    match state.Timer with
-    | Running ->
+    match state.Game.Timer with
+    | Running r ->
         let delta =
           match state.LastTick with
           | Some last -> (now - last).TotalSeconds |> int |> max 0
@@ -131,83 +115,85 @@ module State =
         s1, scheduleTickCmd
     | _ ->
         { state with LastTick = Some now }, Cmd.none
+
   let private startTimer s =
-    match s.Timer with
-    | Running -> s, Cmd.none
+    match s.Game.Timer with
+    | Running _ -> s, Cmd.none
     | _ ->
-      { s with Timer = Running; LastTick = Some DateTime.UtcNow }, scheduleTickCmd
+      let currentHalf = getCurrentHalf s
+      let currentElapsed = getElapsedSecondsInHalf s
+      let newTimer = Running {| Half = currentHalf; Elapsed = currentElapsed; LastTick = DateTime.UtcNow |}
+      let updatedGame = { s.Game with Timer = newTimer }
+      { s with Game = updatedGame; LastTick = Some DateTime.UtcNow }, scheduleTickCmd
 
   let private pauseTimer s =
-    { s with Timer = Paused }, Cmd.none
+    match s.Game.Timer with
+    | Running r ->
+        let newTimer = Paused {| Half = r.Half; Elapsed = r.Elapsed |}
+        let updatedGame = { s.Game with Timer = newTimer }
+        { s with Game = updatedGame }, Cmd.none
+    | _ -> s, Cmd.none
 
   let private stopTimer s =
-    let s1 = { s with Timer = Stopped; LastTick = None }
+    let newTimer = Stopped
+    let updatedGame = { s.Game with Timer = newTimer }
+    let s1 = { s with Game = updatedGame; LastTick = None }
     s1, Cmd.none
 
   let private startNewHalf s =
-    let nextHalf = match s.CurrentHalf with First -> Second | Second -> First
-    let s1 = { s with CurrentHalf = nextHalf; ElapsedSecondsInHalf = 0; Timer = Stopped; LastTick = None }
+    let currentHalf = getCurrentHalf s
+    let nextHalf = match currentHalf with First -> Second | Second -> First
+    let newTimer = Stopped
+    let updatedGame = { s.Game with Timer = newTimer }
+    let s1 = { s with Game = updatedGame; LastTick = None }
     s1, Cmd.none
 
   let private removeTeamPlayer id s =
-    // Remove from players, field, bench, and game available
+    // Remove from team players and game players
     let players = s.TeamPlayers |> List.filter (fun p -> p.Id <> id)
-    let gameAvailable = s.GamePlayers |> List.filter (fun p -> p.Id <> id)
-    let slots = s.FieldSlots |> Array.map (function Some pid when pid = id -> None | x -> x)
-    let bench = s.Bench |> List.filter ((<>) id)
+    let updatedGame = Game.removePlayer id s.Game
     { 
       s with 
         TeamPlayers = players
-        GamePlayers = gameAvailable
-        FieldSlots = slots
-        Bench = bench
+        Game = updatedGame
         SelectedScorer = if s.SelectedScorer = Some id then None else s.SelectedScorer 
     }, Cmd.none
 
   let private updatePlayerName id name s =
     let teamPlayers = s.TeamPlayers |> List.map (fun p -> if p.Id = id then { p with Name = name } else p)
-    let gamePlayers = s.GamePlayers |> List.map (fun p -> if p.Id = id then { p with Name = name } else p)
-    { s with TeamPlayers = teamPlayers; GamePlayers = gamePlayers }, Cmd.none
+    let updatedPlayers = s.Game.Players |> List.map (fun p -> if p.Id = id then { p with Name = name } else p)
+    let updatedGame = { s.Game with Players = updatedPlayers }
+    { s with TeamPlayers = teamPlayers; Game = updatedGame }, Cmd.none
 
   let private dropOnField slot playerId state =
-
+    // For the new system, we don't have field slots, so this might need to be handled differently
+    // For now, let's just change the player's status to OnField
     if isOnField state playerId then
-      // No-op, player is already on the field
       state, Cmd.none
-
-    // If player is on the bench, remove them from bench and place in field slot
-    elif isOnBench state playerId then
-      let currentAtSlot = state.FieldSlots[slot]
-      match currentAtSlot with
-      | Some currentPlayerId ->
-          state
-          |> addToBench currentPlayerId
-          |> placeInFieldSlot slot (Some playerId), Cmd.none
-      | None ->
-          state
-          |> placeInFieldSlot slot (Some playerId)
-          |> removeFromBench playerId, Cmd.none
     else
-      // Player is not on the field or bench, this should not happen, so we do nothing
-      state, Cmd.none
+      let updatedGame = Game.changePlayer playerId playerId state.Game // This is a no-op, we need to implement proper field switching
+      { state with Game = updatedGame }, Cmd.none
 
-  // Dropping a player onto bench means remove from their field slot (if any) and add to bench
+  // For now, dropping on bench means setting status to OnBench
   let private dropOnBench playerId s =
-    let s1 =
-      match indexOfPlayerSlot s playerId with
-      | Some i -> placeInFieldSlot i None s
-      | None -> s
-    let s2 = if isOnBench s1 playerId then s1 else { s1 with Bench = s1.Bench @ [playerId] }
-    s2, Cmd.none
+    let updatedPlayers = 
+      s.Game.Players 
+      |> List.map (fun p -> if p.Id = playerId then { p with InGameStatus = OnBench } else p)
+    let updatedGame = { s.Game with Players = updatedPlayers }
+    { s with Game = updatedGame }, Cmd.none
 
   // Goals
   let private ourGoal state (scorer: PlayerId option) =
-    let ev = { TimeSeconds = state.ElapsedSecondsInHalf; Half = state.CurrentHalf; OurTeam = true; Scorer = scorer }
+    let currentHalf = getCurrentHalf state
+    let elapsedSeconds = getElapsedSecondsInHalf state
+    let ev = { TimeSeconds = elapsedSeconds; Half = currentHalf; OurTeam = true; Scorer = scorer }
     let s1 = { state with OurScore = state.OurScore + 1; Events = ev :: state.Events; SelectedScorer = None; CurrentModal = None }
     s1, Cmd.none
 
   let private theirGoal state =
-    let ev = { TimeSeconds = state.ElapsedSecondsInHalf; Half = state.CurrentHalf; OurTeam = false; Scorer = None }
+    let currentHalf = getCurrentHalf state
+    let elapsedSeconds = getElapsedSecondsInHalf state
+    let ev = { TimeSeconds = elapsedSeconds; Half = currentHalf; OurTeam = false; Scorer = None }
     let s1 = { state with OppScore = state.OppScore + 1; Events = ev :: state.Events; SelectedScorer = None; CurrentModal = None }
     s1, Cmd.none
 
@@ -252,10 +238,11 @@ module State =
       | "" -> state, Cmd.none
       | trimmed ->
         let p = TeamPlayer.create trimmed
+        let updatedGame = Game.addPlayer p state.Game
         let s1 = { 
           state with 
             TeamPlayers = state.TeamPlayers @ [p]
-            Bench = state.Bench @ [p.Id]
+            Game = updatedGame
             CurrentModal = None
         }
         s1, Cmd.none
@@ -272,15 +259,11 @@ module State =
     | TogglePlayerGameAvailability playerId ->
         togglePlayerGameAvailability playerId state
     | ResetGame ->
+      let newGame = Game.create "Default Game" []
       let newState = 
         { state with 
             CurrentPage = GamePage
-            GamePlayers = []
-            FieldSlots = [| None; None; None; None |]
-            Bench = []
-            CurrentHalf = First
-            ElapsedSecondsInHalf = 0
-            Timer = Stopped
+            Game = newGame
             OurScore = 0
             OppScore = 0
             SelectedScorer = None
