@@ -42,8 +42,6 @@ module GamePage =
 
   let private fieldSlot (slotIndex: int) (playerOpt: GamePlayer option) (dispatch: Msg -> unit) =
     let onDrop (ev: DragEvent) =
-      //printfn "Field slot %d drop event" slotIndex
-      //printfn "DataTransfer items: %A" ev.dataTransfer.items
       ev.preventDefault()
       let playerIdStr = ev.dataTransfer.getData "text"
       match System.Guid.TryParse(playerIdStr) with
@@ -51,17 +49,13 @@ module GamePage =
       | false, _ -> ()
 
     let onDragOver (ev: DragEvent) =
-      //printfn "Field slot %d drag over event" slotIndex
-      //printfn "DataTransfer items: %A" ev.dataTransfer.items
       ev.preventDefault()
       ev.dataTransfer.dropEffect <- "move"
 
     let onDragEnter (ev: DragEvent) =
-      //printfn "Field slot %d drag enter event" slotIndex
       ev.preventDefault()
 
     let onDragLeave (ev: DragEvent) =
-      //printfn "Field slot %d drag leave event" slotIndex
       ev.preventDefault()
 
     Html.div [
@@ -176,9 +170,6 @@ module GamePage =
         // Soccer Field
         Html.div [
           prop.className "max-w-4xl mx-auto"
-          // prop.onDragEnter (fun ev ->
-          //   Browser.Dom.console.log("Soccer Field drag enter event", ev)
-          // )
           prop.children [
 
             // Field layout

@@ -106,7 +106,7 @@ module State =
   let private handleTick (state:State) =
     let now = DateTime.UtcNow
     match state.Game.Timer with
-    | Running r ->
+    | Running _r ->
         let delta =
           match state.LastTick with
           | Some last -> (now - last).TotalSeconds |> int |> max 0
@@ -141,8 +141,6 @@ module State =
     s1, Cmd.none
 
   let private startNewHalf s =
-    let currentHalf = getCurrentHalf s
-    let nextHalf = match currentHalf with First -> Second | Second -> First
     let newTimer = Stopped
     let updatedGame = { s.Game with Timer = newTimer }
     let s1 = { s with Game = updatedGame; LastTick = None }
@@ -166,13 +164,32 @@ module State =
     { s with TeamPlayers = teamPlayers; Game = updatedGame }, Cmd.none
 
   let private dropOnField slot playerId state =
-    // For the new system, we don't have field slots, so this might need to be handled differently
-    // For now, let's just change the player's status to OnField
-    if isOnField state playerId then
-      state, Cmd.none
-    else
-      let updatedGame = Game.changePlayer playerId playerId state.Game // This is a no-op, we need to implement proper field switching
-      { state with Game = updatedGame }, Cmd.none
+    // Get the current on-field players to determine what's in the target slot
+    let onFieldPlayers = state.Game.Players |> List.filter (fun p -> p.InGameStatus = OnField)
+    let playerInSlot = onFieldPlayers |> List.tryItem slot
+    let draggedPlayer = state.Game.Players |> List.find (fun p -> p.Id = playerId)
+    
+    match playerInSlot with
+    | Some existingPlayer when existingPlayer.Id = playerId ->
+        // Player is already in this slot, no change needed
+        state, Cmd.none
+    | Some existingPlayer ->
+        // There's a different player in this slot
+        match draggedPlayer.InGameStatus with
+        | OnField ->
+            // Field player dragged onto another field player = no-op
+            state, Cmd.none
+        | OnBench ->
+            // Bench player dragged onto field player - swap them
+            let updatedGame = Game.changePlayer playerId existingPlayer.Id state.Game
+            { state with Game = updatedGame }, Cmd.none
+    | None ->
+        // Slot is empty, just put the player on field
+        let updatedPlayers = 
+          state.Game.Players 
+          |> List.map (fun p -> if p.Id = playerId then { p with InGameStatus = OnField } else p)
+        let updatedGame = { state.Game with Players = updatedPlayers }
+        { state with Game = updatedGame }, Cmd.none
 
   // For now, dropping on bench means setting status to OnBench
   let private dropOnBench playerId s =
