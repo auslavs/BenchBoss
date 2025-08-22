@@ -49,15 +49,14 @@ module Types =
     Scorer: PlayerId option
   }
 
-  // Modal types
   type ModalType =
     | NoModal
+    | TimeManagerModal
     | OurTeamScoreModal
     | OpposingTeamScoreModal
     | AddPlayerModal
     | EditPlayerModal of TeamPlayer
 
-  // Page navigation
   type Page =
     | GamePage
     | ManageTeamPage

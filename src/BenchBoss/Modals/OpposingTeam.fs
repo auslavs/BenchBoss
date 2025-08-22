@@ -1,4 +1,4 @@
-namespace BenchBossApp.Components.BenchBoss.ScoreModal
+namespace BenchBossApp.Components.BenchBoss.Modals
 
 module OpposingTeam =
   open Feliz

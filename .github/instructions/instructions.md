@@ -1,3 +1,7 @@
+---
+applyTo: '**'
+---
+
 # BenchBoss Codebase Instructions
 
 ## Project Overview

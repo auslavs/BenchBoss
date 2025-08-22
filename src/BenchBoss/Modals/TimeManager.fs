@@ -1,6 +1,6 @@
-namespace BenchBossApp.Components.BenchBoss.ScoreModal
+﻿module BenchBossApp.BenchBoss.Modals
 
-module OurTeam =
+module TimeManager =
   open Feliz
   open Browser.Types
   open BenchBossApp.Components.BenchBoss.Types
@@ -24,7 +24,7 @@ module OurTeam =
           // Modal container
           Html.div [
             prop.className "fixed inset-0 z-10 w-screen overflow-y-auto"
-            prop.children [              
+            prop.children [
               Html.div [
                 prop.className "flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0"
                 prop.children [
@@ -67,7 +67,7 @@ module OurTeam =
                                                 else "bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600"
                                               ]
                                               prop.text player.Name
-                                              prop.onClick (fun _ -> 
+                                              prop.onClick (fun _ ->
                                                 let newSelection = if Some player.Id = currentSelectedScorer then None else Some player.Id
                                                 setCurrentSelectedScorer newSelection
                                               )

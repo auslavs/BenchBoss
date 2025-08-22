@@ -25,14 +25,14 @@ module Component =
         | GamePage -> GamePage.render state dispatch
         | ManageTeamPage -> ManageTeamPage.render state dispatch
 
-        ScoreModal.OurTeam.View(
+        Modals.OurTeam.View(
           state.CurrentModal = OurTeamScoreModal,
           state.Game.Players,
           hideModal,
           goalUs
         )
 
-        ScoreModal.OpposingTeam.View(
+        Modals.OpposingTeam.View(
           state.CurrentModal = OpposingTeamScoreModal,
           hideModal,
           goalThem

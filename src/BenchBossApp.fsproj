@@ -8,9 +8,10 @@
     <Compile Include="BenchBoss\Types.fs" />
     <Compile Include="BenchBoss\Store.fs" />
     <Compile Include="BenchBoss\State.fs" />
-    <Compile Include="BenchBoss\ScoreModal\Common.fs" />
-    <Compile Include="BenchBoss\ScoreModal\OurTeam.fs" />
-    <Compile Include="BenchBoss\ScoreModal\OpposingTeam.fs" />
+    <Compile Include="BenchBoss\Modals\Common.fs" />
+    <Compile Include="BenchBoss\Modals\OurTeam.fs" />
+    <Compile Include="BenchBoss\Modals\OpposingTeam.fs" />
+    <Compile Include="BenchBoss\Modals\TimeManager.fs" />
     <Compile Include="BenchBoss\Layout.fs" />
     <Compile Include="BenchBoss\GamePage.fs" />
     <Compile Include="BenchBoss\ManageTeamPage.fs" />
