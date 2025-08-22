@@ -109,7 +109,10 @@ module GamePage =
       ev.preventDefault()
       ev.dataTransfer.dropEffect <- "move"
 
-    let benchPlayerObjs = allPlayers |> List.filter (fun p -> p.InGameStatus = OnBench)
+    let benchPlayerObjs = 
+      allPlayers 
+      |> List.filter (fun p -> p.InGameStatus = OnBench)
+      |> List.sortByDescending (fun p -> p.BenchedSeconds)
 
     React.fragment [
       Html.h3 [
@@ -157,7 +160,11 @@ module GamePage =
     ]
 
   let render (state: State) (dispatch: Msg -> unit) =
-    let onFieldPlayers = state.Game.Players |> List.filter (fun p -> p.InGameStatus = OnField)
+    let onFieldPlayers = 
+      state.Game.Players 
+      |> List.filter (fun p -> p.InGameStatus = OnField)
+      |> List.sortBy (fun p -> p.PlayedSeconds)
+    
     // For now, create dummy field slots to maintain the 4-slot layout
     let fieldPlayers = 
       let playerArray = Array.create 4 None

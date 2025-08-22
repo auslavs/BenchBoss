@@ -11,6 +11,9 @@ module Component =
 
     let startTimer = fun _ -> dispatch StartTimer
     let pauseTimer = fun _ -> dispatch PauseTimer
+    let stopTimer = fun _ -> dispatch StopTimer
+    let endHalf = fun _ -> dispatch EndHalf
+    let startNewHalf = fun _ -> dispatch StartNewHalf
     let hideModal = fun _ -> dispatch HideModal
     let goalUs = GoalUs >> dispatch
     let goalThem = fun _ -> dispatch GoalThem
@@ -42,7 +45,11 @@ module Component =
           state.CurrentModal = TimeManagerModal,
           hideModal,
           startTimer,
-          pauseTimer
+          pauseTimer,
+          stopTimer,
+          endHalf,
+          startNewHalf,
+          state.Game.Timer
         )
       ]
     ]

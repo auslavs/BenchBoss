@@ -133,6 +133,7 @@ module Types =
     | PauseTimer
     | StopTimer
     | StartNewHalf
+    | EndHalf
     | UpdatePlayerName of PlayerId * string
     | DropOnField of targetSlot:int * playerId:PlayerId
     | DropOnBench of playerId:PlayerId

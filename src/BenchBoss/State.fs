@@ -146,6 +146,25 @@ module State =
     let s1 = { s with Game = updatedGame; LastTick = None }
     s1, Cmd.none
 
+  let private endHalf s =
+    match s.Game.Timer with
+    | Running r when r.Half = First ->
+        // End first half, transition to break/halftime
+        let newTimer = Break {| Half = Second; Elapsed = 0 |}
+        let updatedGame = { s.Game with Timer = newTimer }
+        { s with Game = updatedGame; LastTick = None; CurrentModal = NoModal }, Cmd.none
+    | Running r when r.Half = Second ->
+        // End second half, stop the game
+        let newTimer = Stopped
+        let updatedGame = { s.Game with Timer = newTimer }
+        { s with Game = updatedGame; LastTick = None; CurrentModal = NoModal }, Cmd.none
+    | Break b ->
+        // End break, move to second half stopped state
+        let newTimer = Stopped
+        let updatedGame = { s.Game with Timer = newTimer }
+        { s with Game = updatedGame; LastTick = None; CurrentModal = NoModal }, Cmd.none
+    | _ -> s, Cmd.none
+
   let private removeTeamPlayer id s =
     // Remove from team players and game players
     let players = s.TeamPlayers |> List.filter (fun p -> p.Id <> id)
@@ -164,20 +183,25 @@ module State =
     { s with TeamPlayers = teamPlayers; Game = updatedGame }, Cmd.none
 
   let private dropOnField slot playerId state =
-    // Get the current on-field players to determine what's in the target slot
-    let onFieldPlayers = state.Game.Players |> List.filter (fun p -> p.InGameStatus = OnField)
+    // Get the current on-field players sorted by playing time (to match display order)
+    let onFieldPlayers = 
+      state.Game.Players 
+      |> List.filter (fun p -> p.InGameStatus = OnField)
+      |> List.sortBy (fun p -> p.PlayedSeconds)
+    
     let playerInSlot = onFieldPlayers |> List.tryItem slot
     let draggedPlayer = state.Game.Players |> List.find (fun p -> p.Id = playerId)
     
     match playerInSlot with
     | Some existingPlayer when existingPlayer.Id = playerId ->
-        // Player is already in this slot, no change needed
+        // Player is already in this position, no change needed
         state, Cmd.none
     | Some existingPlayer ->
-        // There's a different player in this slot
+        // There's a different player in this position
         match draggedPlayer.InGameStatus with
         | OnField ->
-            // Field player dragged onto another field player = no-op
+            // Both players are on field - this is just a reordering, no action needed
+            // since positions are determined by playing time
             state, Cmd.none
         | OnBench ->
             // Bench player dragged onto field player - swap them
@@ -233,6 +257,8 @@ module State =
         stopTimer state
     | StartNewHalf ->
         startNewHalf state
+    | EndHalf ->
+        endHalf state
     | UpdatePlayerName (id, name) ->
         updatePlayerName id name state
     | DropOnField (slot, pid) ->
