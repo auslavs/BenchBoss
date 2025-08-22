@@ -29,7 +29,7 @@ module State =
       SelectedScorer = None
       Events = []
       LastTick = None
-      CurrentModal = None
+      CurrentModal = NoModal
     }
 
   let init () =
@@ -187,14 +187,14 @@ module State =
     let currentHalf = getCurrentHalf state
     let elapsedSeconds = getElapsedSecondsInHalf state
     let ev = { TimeSeconds = elapsedSeconds; Half = currentHalf; OurTeam = true; Scorer = scorer }
-    let s1 = { state with OurScore = state.OurScore + 1; Events = ev :: state.Events; SelectedScorer = None; CurrentModal = None }
+    let s1 = { state with OurScore = state.OurScore + 1; Events = ev :: state.Events; SelectedScorer = None; CurrentModal = NoModal }
     s1, Cmd.none
 
   let private theirGoal state =
     let currentHalf = getCurrentHalf state
     let elapsedSeconds = getElapsedSecondsInHalf state
     let ev = { TimeSeconds = elapsedSeconds; Half = currentHalf; OurTeam = false; Scorer = None }
-    let s1 = { state with OppScore = state.OppScore + 1; Events = ev :: state.Events; SelectedScorer = None; CurrentModal = None }
+    let s1 = { state with OppScore = state.OppScore + 1; Events = ev :: state.Events; SelectedScorer = None; CurrentModal = NoModal }
     s1, Cmd.none
 
   let togglePlayerGameAvailability playerId state =
@@ -229,9 +229,9 @@ module State =
     | LoadFromStorage s ->
         s, Cmd.none
     | ShowModal modalType ->
-        { state with CurrentModal = Some modalType }, Cmd.none
+        { state with CurrentModal = modalType }, Cmd.none
     | HideModal ->
-        { state with CurrentModal = None; }, Cmd.none
+        { state with CurrentModal = NoModal }, Cmd.none
     | NavigateToPage page -> { state with CurrentPage = page }, Cmd.none
     | ConfirmAddTeamPlayer name ->
       match name.Trim() with
@@ -243,7 +243,7 @@ module State =
           state with 
             TeamPlayers = state.TeamPlayers @ [p]
             Game = updatedGame
-            CurrentModal = None
+            CurrentModal = NoModal
         }
         s1, Cmd.none
     | ConfirmUpdateTeamPlayer updatedPlayer ->
@@ -252,7 +252,7 @@ module State =
         state, Cmd.none
       else
         let players = state.TeamPlayers |> List.map (fun p -> if p.Id = updatedPlayer.Id then { p with Name = trimmed } else p)
-        let s1 = { state with TeamPlayers = players; CurrentModal = None }
+        let s1 = { state with TeamPlayers = players; CurrentModal = NoModal }
         s1, Cmd.none
     | ConfirmRemoveTeamPlayer id ->
         removeTeamPlayer id state
@@ -269,7 +269,7 @@ module State =
             SelectedScorer = None
             Events = []
             LastTick = None
-            CurrentModal = None
+            CurrentModal = NoModal
         }
       Store.save newState
       newState, Cmd.none

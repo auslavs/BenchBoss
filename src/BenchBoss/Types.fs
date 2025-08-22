@@ -51,6 +51,7 @@ module Types =
 
   // Modal types
   type ModalType =
+    | NoModal
     | OurTeamScoreModal
     | OpposingTeamScoreModal
     | AddPlayerModal
@@ -123,7 +124,7 @@ module Types =
     SelectedScorer: PlayerId option
     Events: ScoreEvent list
     LastTick: DateTime option
-    CurrentModal: ModalType option
+    CurrentModal: ModalType
   }
 
 

@@ -292,8 +292,8 @@ module ManageTeamPage =
 
             // Modals
             match state.CurrentModal with
-            | Some AddPlayerModal -> Modal.AddPlayer dispatch
-            | Some (EditPlayerModal player) -> Modal.EditPlayer dispatch player
+            | AddPlayerModal -> Modal.AddPlayer dispatch
+            | EditPlayerModal player -> Modal.EditPlayer dispatch player
             | _ -> Html.div []
           ]
         ]
