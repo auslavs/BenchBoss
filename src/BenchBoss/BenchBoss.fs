@@ -15,17 +15,6 @@ module Component =
     let goalUs = GoalUs >> dispatch
     let goalThem = fun _ -> dispatch GoalThem
 
-    // Check which modal to show
-    let isHomeTeamModalOpen = 
-      match state.CurrentModal with
-      | Some OurTeamScoreModal -> true
-      | _ -> false
-    
-    let isAwayTeamModalOpen = 
-      match state.CurrentModal with
-      | Some OpposingTeamScoreModal -> true
-      | _ -> false
-
     Html.div [
       prop.className "flex flex-col min-h-screen"
       prop.children [
@@ -37,14 +26,14 @@ module Component =
         | ManageTeamPage -> ManageTeamPage.render state dispatch
 
         ScoreModal.OurTeam.View(
-          isHomeTeamModalOpen,
-          state.GamePlayers,
+          state.CurrentModal = OurTeamScoreModal,
+          state.Game.Players,
           hideModal,
           goalUs
         )
 
         ScoreModal.OpposingTeam.View(
-          isAwayTeamModalOpen,
+          state.CurrentModal = OpposingTeamScoreModal,
           hideModal,
           goalThem
         )

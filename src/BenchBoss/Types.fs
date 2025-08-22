@@ -13,21 +13,23 @@ module Types =
     Name: string
   }
 
+  type InGameStatus =
+    | OnField
+    | OnBench
+
   type GamePlayer = {
     Id: PlayerId
     Name: string
+    InGameStatus: InGameStatus
     PlayedSeconds: int
     BenchedSeconds: int
   }
 
   module GamePlayer =
-
-    let addPlayed secs p = { p with PlayedSeconds = p.PlayedSeconds + secs }
-    let addBenched secs p = { p with BenchedSeconds = p.BenchedSeconds + secs }
-
     let ofTeamPlayer (p: TeamPlayer) : GamePlayer =
       { Id = p.Id
         Name = p.Name
+        InGameStatus = OnBench
         PlayedSeconds = 0
         BenchedSeconds = 0 }
 
@@ -49,6 +51,7 @@ module Types =
 
   // Modal types
   type ModalType =
+    | NoModal
     | OurTeamScoreModal
     | OpposingTeamScoreModal
     | AddPlayerModal
@@ -59,21 +62,69 @@ module Types =
     | GamePage
     | ManageTeamPage
 
+  type RunningTimerState =
+    {| Half: Half; Elapsed: int; LastTick: DateTime |}
+
+  type PausedTimerState =
+    {| Half: Half; Elapsed: int |}
+
+  type BreakTimerState =
+    {| Half: Half; Elapsed: int |}
+
+  type Timer =
+    | Running of RunningTimerState
+    | Paused of PausedTimerState
+    | Break of BreakTimerState
+    | Stopped
+
+  type Game = {
+    Id: Guid
+    Name: string
+    Players: GamePlayer list
+    ElapsedSecondsInHalf: int
+    Timer: Timer
+  }
+
+  module Game =
+
+    let create name players =
+      { Id = Guid.NewGuid()
+        Name = name
+        Players = players
+        ElapsedSecondsInHalf = 0
+        Timer = Stopped }
+
+    let addPlayer (teamPlayer: TeamPlayer) game =
+      let gamePlayer = GamePlayer.ofTeamPlayer teamPlayer
+      { game with Players = gamePlayer :: game.Players }
+
+    let removePlayer (playerId: PlayerId) game =
+      { game with Players = List.filter (fun p -> p.Id <> playerId) game.Players }
+
+    let changePlayer (benchedPlayer: PlayerId) (onFieldPlayer: PlayerId) game =
+      let updatedPlayers =
+        game.Players |> List.fold(
+          fun (acc: GamePlayer list) (p: GamePlayer) ->
+            if p.Id = benchedPlayer then
+              { p with InGameStatus = OnField } :: acc
+            elif p.Id = onFieldPlayer then
+              { p with InGameStatus = OnBench } :: acc
+            else
+              p :: acc
+        ) []
+      { game with Players = List.rev updatedPlayers }
+
+
   type State = {
     CurrentPage: Page
     TeamPlayers: TeamPlayer list
-    GamePlayers: GamePlayer list
-    FieldSlots: PlayerId option array
-    Bench: PlayerId list
-    CurrentHalf: Half
-    ElapsedSecondsInHalf: int
-    Timer: TimerStatus
+    Game: Game
     OurScore: int
     OppScore: int
     SelectedScorer: PlayerId option
     Events: ScoreEvent list
     LastTick: DateTime option
-    CurrentModal: ModalType option
+    CurrentModal: ModalType
   }
 
 
@@ -97,6 +148,7 @@ module Types =
     | ConfirmRemoveTeamPlayer of PlayerId
     | TogglePlayerGameAvailability of PlayerId
     | ResetGame
+
   module Constants =
     [<Literal>]
     let StorageKey = "benchboss-state-v6"

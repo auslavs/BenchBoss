@@ -42,8 +42,6 @@ module GamePage =
 
   let private fieldSlot (slotIndex: int) (playerOpt: GamePlayer option) (dispatch: Msg -> unit) =
     let onDrop (ev: DragEvent) =
-      //printfn "Field slot %d drop event" slotIndex
-      //printfn "DataTransfer items: %A" ev.dataTransfer.items
       ev.preventDefault()
       let playerIdStr = ev.dataTransfer.getData "text"
       match System.Guid.TryParse(playerIdStr) with
@@ -51,17 +49,13 @@ module GamePage =
       | false, _ -> ()
 
     let onDragOver (ev: DragEvent) =
-      //printfn "Field slot %d drag over event" slotIndex
-      //printfn "DataTransfer items: %A" ev.dataTransfer.items
       ev.preventDefault()
       ev.dataTransfer.dropEffect <- "move"
 
     let onDragEnter (ev: DragEvent) =
-      //printfn "Field slot %d drag enter event" slotIndex
       ev.preventDefault()
 
     let onDragLeave (ev: DragEvent) =
-      //printfn "Field slot %d drag leave event" slotIndex
       ev.preventDefault()
 
     Html.div [
@@ -88,7 +82,7 @@ module GamePage =
     ]
 
   [<ReactComponent>]
-  let private BenchArea (benchPlayers: PlayerId list) (allPlayers: GamePlayer list) (dispatch: Msg -> unit) =
+  let private BenchArea (allPlayers: GamePlayer list) (dispatch: Msg -> unit) =
 
     let playerIsHovering, setPlayerIsHovering = React.useState false
 
@@ -115,8 +109,7 @@ module GamePage =
       ev.preventDefault()
       ev.dataTransfer.dropEffect <- "move"
 
-    let playerById = allPlayers |> List.map (fun p -> p.Id, p) |> Map.ofList
-    let benchPlayerObjs = benchPlayers |> List.choose (fun playerId -> playerById |> Map.tryFind playerId)
+    let benchPlayerObjs = allPlayers |> List.filter (fun p -> p.InGameStatus = OnBench)
 
     React.fragment [
       Html.h3 [
@@ -164,8 +157,12 @@ module GamePage =
     ]
 
   let render (state: State) (dispatch: Msg -> unit) =
-    let playerById = state.GamePlayers |> List.map (fun p -> p.Id, p) |> Map.ofList
-    let fieldPlayers = state.FieldSlots |> Array.map (Option.bind (fun id -> playerById |> Map.tryFind id))
+    let onFieldPlayers = state.Game.Players |> List.filter (fun p -> p.InGameStatus = OnField)
+    // For now, create dummy field slots to maintain the 4-slot layout
+    let fieldPlayers = 
+      let playerArray = Array.create 4 None
+      onFieldPlayers |> List.iteri (fun i p -> if i < 4 then playerArray[i] <- Some p)
+      playerArray
     
     Html.div [
       prop.className "flex-1 p-4 bg-gradient-to-b from-green-50 to-blue-50"
@@ -173,9 +170,6 @@ module GamePage =
         // Soccer Field
         Html.div [
           prop.className "max-w-4xl mx-auto"
-          // prop.onDragEnter (fun ev ->
-          //   Browser.Dom.console.log("Soccer Field drag enter event", ev)
-          // )
           prop.children [
 
             // Field layout
@@ -204,7 +198,7 @@ module GamePage =
             Html.div [
               prop.className "mt-8"
               prop.children [
-                BenchArea state.Bench state.GamePlayers dispatch
+                BenchArea state.Game.Players dispatch
               ]
             ]
           ]
