@@ -124,20 +124,20 @@ module State =
       let currentElapsed = getElapsedSecondsInHalf s
       let newTimer = Running {| Half = currentHalf; Elapsed = currentElapsed; LastTick = DateTime.UtcNow |}
       let updatedGame = { s.Game with Timer = newTimer }
-      { s with Game = updatedGame; LastTick = Some DateTime.UtcNow }, scheduleTickCmd
+      { s with Game = updatedGame; LastTick = Some DateTime.UtcNow; CurrentModal = NoModal }, scheduleTickCmd
 
   let private pauseTimer s =
     match s.Game.Timer with
     | Running r ->
         let newTimer = Paused {| Half = r.Half; Elapsed = r.Elapsed |}
         let updatedGame = { s.Game with Timer = newTimer }
-        { s with Game = updatedGame }, Cmd.none
+        { s with Game = updatedGame; CurrentModal = NoModal }, Cmd.none
     | _ -> s, Cmd.none
 
   let private stopTimer s =
     let newTimer = Stopped
     let updatedGame = { s.Game with Timer = newTimer }
-    let s1 = { s with Game = updatedGame; LastTick = None }
+    let s1 = { s with Game = updatedGame; LastTick = None; CurrentModal = NoModal }
     s1, Cmd.none
 
   let private startNewHalf s =

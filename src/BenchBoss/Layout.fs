@@ -108,41 +108,12 @@ module Layout =
         ]
 
         Html.div [
-          prop.className "flex bg-purple-200 gap-4 p-4";
+          prop.className "flex bg-purple-200 gap-4 p-4 justify-center";
           prop.children [
-            Html.div [
-              prop.className " text-3xl font-bold w-full text-center"
-              //prop.text (Time.formatMMSS state.ElapsedSecondsInHalf)
-            ]
-            Html.div [
-              prop.className "bg-purple-200 text-3xl font-bold w-full text-center";
+            Html.button [
+              prop.className "bg-purple-200 text-3xl font-bold text-center";
+              prop.onClick (fun _ -> dispatch (ShowModal TimeManagerModal))
               prop.text (Time.formatMMSS (State.getElapsedSecondsInHalf state))
-            ]
-            Html.div [
-              prop.className "bg-purple-200 text-3xl font-bold w-full text-center";
-              prop.children [
-                Html.div [
-                  prop.className "flex items-center justify-center gap-3";
-                  prop.children [
-                    // Play/Pause toggle button
-                    match State.getTimerStatus state with
-                    | Running _ -> pauseButton pauseTimer
-                    | _ -> playButton startTimer
-                    // Stop button
-                    Html.button [
-                      prop.className "bg-red-500 hover:bg-red-600 focus:ring-2 focus:ring-red-300 text-white rounded-full w-10 h-10 inline-flex items-center justify-center shadow";
-                      prop.ariaLabel "Stop";
-                      prop.children [
-                        Html.img [
-                          prop.src "assets/stop.svg";
-                          prop.alt "Stop";
-                          prop.className "w-5 h-5"
-                        ]
-                      ]
-                    ]
-                  ]
-                ]
-              ]
             ]
           ]
         ]

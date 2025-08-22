@@ -37,5 +37,12 @@ module Component =
           hideModal,
           goalThem
         )
+
+        Modals.TimeManager.View(
+          state.CurrentModal = TimeManagerModal,
+          hideModal,
+          startTimer,
+          pauseTimer
+        )
       ]
     ]
