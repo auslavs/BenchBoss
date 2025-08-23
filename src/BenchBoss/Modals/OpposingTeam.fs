@@ -19,10 +19,10 @@ module OpposingTeam =
           // Modal container
           Html.div [
             prop.className "fixed inset-0 z-10 w-screen overflow-y-auto"
-            prop.onClick onClose
             prop.children [
               Html.div [
                 prop.className "flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0"
+                prop.onClick (fun e -> if e.target = e.currentTarget then onClose e)
                 prop.children [
                   // Panel
                   Html.div [

@@ -26,7 +26,6 @@ module State =
       Game = Game.create "Default Game" []
       OurScore = 0
       OppScore = 0
-      SelectedScorer = None
       Events = []
       LastTick = None
       CurrentModal = NoModal
@@ -166,15 +165,9 @@ module State =
     | _ -> s, Cmd.none
 
   let private removeTeamPlayer id s =
-    // Remove from team players and game players
     let players = s.TeamPlayers |> List.filter (fun p -> p.Id <> id)
     let updatedGame = Game.removePlayer id s.Game
-    { 
-      s with 
-        TeamPlayers = players
-        Game = updatedGame
-        SelectedScorer = if s.SelectedScorer = Some id then None else s.SelectedScorer 
-    }, Cmd.none
+    { s with TeamPlayers = players; Game = updatedGame }, Cmd.none
 
   let private updatePlayerName id name s =
     let teamPlayers = s.TeamPlayers |> List.map (fun p -> if p.Id = id then { p with Name = name } else p)
@@ -228,14 +221,14 @@ module State =
     let currentHalf = getCurrentHalf state
     let elapsedSeconds = getElapsedSecondsInHalf state
     let ev = { TimeSeconds = elapsedSeconds; Half = currentHalf; OurTeam = true; Scorer = scorer }
-    let s1 = { state with OurScore = state.OurScore + 1; Events = ev :: state.Events; SelectedScorer = None; CurrentModal = NoModal }
+    let s1 = { state with OurScore = state.OurScore + 1; Events = ev :: state.Events; CurrentModal = NoModal }
     s1, Cmd.none
 
   let private theirGoal state =
     let currentHalf = getCurrentHalf state
     let elapsedSeconds = getElapsedSecondsInHalf state
     let ev = { TimeSeconds = elapsedSeconds; Half = currentHalf; OurTeam = false; Scorer = None }
-    let s1 = { state with OppScore = state.OppScore + 1; Events = ev :: state.Events; SelectedScorer = None; CurrentModal = NoModal }
+    let s1 = { state with OppScore = state.OppScore + 1; Events = ev :: state.Events; CurrentModal = NoModal }
     s1, Cmd.none
 
   let togglePlayerGameAvailability playerId state =
@@ -309,7 +302,6 @@ module State =
             Game = newGame
             OurScore = 0
             OppScore = 0
-            SelectedScorer = None
             Events = []
             LastTick = None
             CurrentModal = NoModal

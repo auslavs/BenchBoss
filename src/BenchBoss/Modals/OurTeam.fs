@@ -7,9 +7,9 @@ module OurTeam =
 
 
   [<ReactComponent>]
-  let View (isOpen: bool, players: GamePlayer list, onClose: MouseEvent -> unit, onSelectScorer: PlayerId option -> unit) =
+  let View (isOpen: bool, players: GamePlayer list, onClose: MouseEvent -> unit, confirmOurGoal: PlayerId option -> unit) =
 
-    let currentSelectedScorer, setCurrentSelectedScorer = React.useState<PlayerId option>(None)
+    let currentSelectedScorer, setCurrentSelectedScorer = React.useState<PlayerId option> None
 
     if not isOpen then Html.none
     else
@@ -23,10 +23,10 @@ module OurTeam =
           // Modal container
           Html.div [
             prop.className "fixed inset-0 z-10 w-screen overflow-y-auto"
-            prop.onClick onClose
             prop.children [              
               Html.div [
                 prop.className "flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0"
+                prop.onClick (fun e -> if e.target = e.currentTarget then onClose e)
                 prop.children [
                   // Panel
                   Html.div [
@@ -67,10 +67,7 @@ module OurTeam =
                                                 else "bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600"
                                               ]
                                               prop.text player.Name
-                                              prop.onClick (fun _ -> 
-                                                let newSelection = if Some player.Id = currentSelectedScorer then None else Some player.Id
-                                                setCurrentSelectedScorer newSelection
-                                              )
+                                              prop.onClick (fun _ -> player.Id |> Some |> setCurrentSelectedScorer)
                                             ]
                                         ]
                                       ]
@@ -88,7 +85,7 @@ module OurTeam =
                           Html.div [
                             prop.className "flex gap-2 flex-col"
                             prop.children [
-                              Common.confirmButton currentSelectedScorer.IsNone (fun _ -> onSelectScorer currentSelectedScorer)
+                              Common.confirmButton currentSelectedScorer.IsNone (fun _ -> confirmOurGoal currentSelectedScorer)
                               Common.cancelButton onClose
                             ]
                           ]

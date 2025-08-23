@@ -120,7 +120,6 @@ module Types =
     Game: Game
     OurScore: int
     OppScore: int
-    SelectedScorer: PlayerId option
     Events: ScoreEvent list
     LastTick: DateTime option
     CurrentModal: ModalType
