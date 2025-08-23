@@ -21,7 +21,7 @@ module Component =
     Html.div [
       prop.className "flex flex-col min-h-screen"
       prop.children [
-        Layout.render startTimer pauseTimer dispatch state
+        Layout.render dispatch state
 
         // Page content based on current page
         match state.CurrentPage with

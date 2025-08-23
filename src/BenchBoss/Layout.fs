@@ -1,39 +1,10 @@
 namespace BenchBossApp.Components.BenchBoss
 
 module Layout =
-  open Browser.Types
   open Feliz
   open BenchBossApp.Components.BenchBoss.Types
 
-  let playButton startTimer =
-    Html.button [
-      prop.className "bg-purple-500 hover:bg-purple-600 focus:ring-2 focus:ring-purple-300 text-white rounded-full w-10 h-10 inline-flex items-center justify-center shadow";
-      prop.ariaLabel "Play"
-      prop.onClick startTimer
-      prop.children [
-        Html.img [
-            prop.src "assets/play.svg";
-            prop.alt "Play";
-            prop.className "w-5 h-5"
-          ]
-      ]
-    ]
-
-  let pauseButton pauseTimer =
-    Html.button [
-      prop.className "bg-purple-500 hover:bg-purple-600 focus:ring-2 focus:ring-purple-300 text-white rounded-full w-10 h-10 inline-flex items-center justify-center shadow";
-      prop.ariaLabel "Play"
-      prop.onClick pauseTimer
-      prop.children [
-        Html.img [
-            prop.src "assets/pause.svg";
-            prop.alt "Pause";
-            prop.className "w-5 h-5"
-          ]
-      ]
-    ]
-
-  let render (startTimer: MouseEvent -> unit) (pauseTimer: MouseEvent -> unit) (dispatch: Msg -> unit) (state: State) =
+  let render (dispatch: Msg -> unit) (state: State) =
     Html.div [
       prop.className "flex flex-col"
       prop.children [
