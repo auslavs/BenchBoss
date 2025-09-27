@@ -13,6 +13,7 @@
     <Compile Include="BenchBoss\Modals\OpposingTeam.fs" />
     <Compile Include="BenchBoss\Modals\TimeManager.fs" />
     <Compile Include="BenchBoss\Layout.fs" />
+    <Compile Include="BenchBoss\LandingPage.fs" />
     <Compile Include="BenchBoss\GamePage.fs" />
     <Compile Include="BenchBoss\ManageTeamPage.fs" />
     <Compile Include="BenchBoss\BenchBoss.fs" />

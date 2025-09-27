@@ -25,6 +25,7 @@ module Component =
 
         // Page content based on current page
         match state.CurrentPage with
+        | LandingPage -> LandingPage.render state dispatch
         | GamePage -> GamePage.render state dispatch
         | ManageTeamPage -> ManageTeamPage.render state dispatch
 

@@ -58,6 +58,7 @@ module Types =
     | EditPlayerModal of TeamPlayer
 
   type Page =
+    | LandingPage
     | GamePage
     | ManageTeamPage
 
@@ -82,16 +83,18 @@ module Types =
     Players: GamePlayer list
     ElapsedSecondsInHalf: int
     Timer: Timer
+    FieldSlots: int
   }
 
   module Game =
 
-    let create name players =
+    let create name fieldSlots players =
       { Id = Guid.NewGuid()
         Name = name
         Players = players
         ElapsedSecondsInHalf = 0
-        Timer = Stopped }
+        Timer = Stopped
+        FieldSlots = fieldSlots }
 
     let addPlayer (teamPlayer: TeamPlayer) game =
       let gamePlayer = GamePlayer.ofTeamPlayer teamPlayer
@@ -142,6 +145,9 @@ module Types =
     | ShowModal of ModalType
     | HideModal
     | NavigateToPage of Page
+    | SetFieldSlots of int
+    | UpdateGameName of string
+    | StartGame
     | ConfirmAddTeamPlayer of string
     | ConfirmUpdateTeamPlayer of TeamPlayer
     | ConfirmRemoveTeamPlayer of PlayerId
