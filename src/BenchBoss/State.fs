@@ -7,28 +7,66 @@ open BenchBossApp.Components.BenchBoss.Types
 [<RequireQualifiedAccess>]
 module State =
 
+  let private defaultFieldSlots = 4
+  let private maxFieldSlots = 11
+
+  let private clampFieldSlots slots =
+    slots
+    |> max 1
+    |> min maxFieldSlots
+
+  let private enforceFieldSlotLimit (slots:int) (players: GamePlayer list) =
+    let clampedSlots = clampFieldSlots slots
+    let onFieldPlayers =
+      players
+      |> List.filter (fun p -> p.InGameStatus = OnField)
+
+    if onFieldPlayers.Length <= clampedSlots then
+      players
+    else
+      let playersToKeep =
+        onFieldPlayers
+        |> List.sortBy (fun p -> (p.PlayedSeconds, p.Name))
+        |> List.take clampedSlots
+        |> List.map _.Id
+        |> Set.ofList
+
+      players
+      |> List.map (fun p ->
+          if p.InGameStatus = OnField && not (playersToKeep.Contains p.Id) then
+            { p with InGameStatus = OnBench }
+          else
+            p)
+
   let private validateState (state: State) : State =
     // Ensure Game Players only contains valid player IDs
     let validPlayerIds = state.TeamPlayers |> List.map _.Id |> Set.ofList
-    let validGamePlayers = 
-      state.Game.Players 
+    let validGamePlayers =
+      state.Game.Players
       |> List.filter (fun gp -> validPlayerIds.Contains gp.Id)
 
-    let validatedGame = { state.Game with Players = validGamePlayers }
-    
-    { state with Game = validatedGame }
+    let clampedSlots = clampFieldSlots state.Game.FieldSlots
+    let normalizedPlayers = enforceFieldSlotLimit clampedSlots validGamePlayers
+
+    let validatedGame =
+      { state.Game with
+          Players = normalizedPlayers
+          FieldSlots = clampedSlots }
+
+    { state with Game = validatedGame; IsSidebarOpen = false }
 
 
   let private empty () : State =
     {
-      CurrentPage = GamePage
+      CurrentPage = LandingPage
       TeamPlayers = []
-      Game = Game.create "Default Game" []
+      Game = Game.create "Default Game" defaultFieldSlots []
       OurScore = 0
       OppScore = 0
       Events = []
       LastTick = None
       CurrentModal = NoModal
+      IsSidebarOpen = false
     }
 
   let init () =
@@ -268,7 +306,49 @@ module State =
         { state with CurrentModal = modalType }, Cmd.none
     | HideModal ->
         { state with CurrentModal = NoModal }, Cmd.none
-    | NavigateToPage page -> { state with CurrentPage = page }, Cmd.none
+    | NavigateToPage page -> { state with CurrentPage = page; IsSidebarOpen = false }, Cmd.none
+    | SetSidebarOpen isOpen -> { state with IsSidebarOpen = isOpen }, Cmd.none
+    | SetFieldSlots slots ->
+        let clamped = clampFieldSlots slots
+        let normalizedPlayers = enforceFieldSlotLimit clamped state.Game.Players
+        let updatedGame =
+          { state.Game with
+              FieldSlots = clamped
+              Players = normalizedPlayers }
+        { state with Game = updatedGame }, Cmd.none
+    | UpdateGameName name ->
+        let trimmed = name.Trim()
+        let updatedGame = { state.Game with Name = trimmed }
+        { state with Game = updatedGame }, Cmd.none
+    | StartGame ->
+        let sortedPlayers =
+          state.Game.Players
+          |> List.sortBy (fun p -> p.Name)
+
+        let updatedPlayers =
+          sortedPlayers
+          |> List.mapi (fun idx p ->
+              if idx < state.Game.FieldSlots then
+                { p with InGameStatus = OnField; PlayedSeconds = 0; BenchedSeconds = 0 }
+              else
+                { p with InGameStatus = OnBench; PlayedSeconds = 0; BenchedSeconds = 0 })
+
+        let updatedGame =
+          { state.Game with
+              Players = updatedPlayers
+              Timer = Stopped
+              ElapsedSecondsInHalf = 0 }
+
+        let newState =
+          { state with
+              Game = updatedGame
+              OurScore = 0
+              OppScore = 0
+              Events = []
+              LastTick = None
+              CurrentModal = NoModal
+              CurrentPage = GamePage }
+        newState, Cmd.none
     | ConfirmAddTeamPlayer name ->
       match name.Trim() with
       | "" -> state, Cmd.none
@@ -295,10 +375,10 @@ module State =
     | TogglePlayerGameAvailability playerId ->
         togglePlayerGameAvailability playerId state
     | ResetGame ->
-      let newGame = Game.create "Default Game" []
-      let newState = 
-        { state with 
-            CurrentPage = GamePage
+      let newGame = Game.create "Default Game" defaultFieldSlots []
+      let newState =
+        { state with
+            CurrentPage = LandingPage
             Game = newGame
             OurScore = 0
             OppScore = 0

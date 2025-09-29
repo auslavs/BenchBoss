@@ -165,10 +165,11 @@ module GamePage =
       |> List.filter (fun p -> p.InGameStatus = OnField)
       |> List.sortBy (fun p -> p.PlayedSeconds)
     
-    // For now, create dummy field slots to maintain the 4-slot layout
-    let fieldPlayers = 
-      let playerArray = Array.create 4 None
-      onFieldPlayers |> List.iteri (fun i p -> if i < 4 then playerArray[i] <- Some p)
+    // Create field slots based on the configured number of positions
+    let totalSlots = max 1 state.Game.FieldSlots
+    let fieldPlayers =
+      let playerArray = Array.create totalSlots None
+      onFieldPlayers |> List.iteri (fun i p -> if i < totalSlots then playerArray[i] <- Some p)
       playerArray
     
     Html.div [
