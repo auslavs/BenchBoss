@@ -187,15 +187,19 @@ module Layout =
 
   let private headerTitle state =
     match state.CurrentPage with
-    | LandingPage -> "Overview"
+    | LandingPage
     | StartGamePage -> "Game Setup"
     | ManageTeamPage -> "Team Management"
     | GamePage -> "Match Center"
 
   let private headerSubtitle state =
     match state.CurrentPage with
-    | LandingPage -> "Choose how you'd like to prepare for match day."
-    | StartGamePage -> state.Game.Name
+    | LandingPage
+    | StartGamePage ->
+        if String.IsNullOrWhiteSpace state.Game.Name then
+          "Name your match and lock in today's lineup."
+        else
+          state.Game.Name
     | ManageTeamPage ->
         if state.TeamPlayers.IsEmpty then "Add players to build your roster." else $"{state.TeamPlayers.Length} players available"
     | GamePage -> state.Game.Name
