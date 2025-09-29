@@ -59,6 +59,7 @@ module Types =
 
   type Page =
     | LandingPage
+    | StartGamePage
     | GamePage
     | ManageTeamPage
 

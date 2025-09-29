@@ -28,6 +28,14 @@ module Layout =
         "Manage Teams and Players"
         (fun () -> dispatch (NavigateToPage ManageTeamPage))
 
+    let startGameButton () =
+      navButton
+        "assets/play.svg"
+        "Start Game Setup"
+        "Start Game Setup"
+        "Start Game Setup"
+        (fun () -> dispatch (NavigateToPage StartGamePage))
+
     let gameButton () =
       navButton
         "assets/soccer.svg"
@@ -39,15 +47,16 @@ module Layout =
     let landingButton () =
       navButton
         "assets/play.svg"
-        "Game Setup"
-        "Game Setup"
-        "Game Setup"
+        "Main Menu"
+        "Main Menu"
+        "Main Menu"
         (fun () -> dispatch (NavigateToPage LandingPage))
 
     match state.CurrentPage with
-    | LandingPage -> [ manageTeamButton () ]
-    | GamePage -> [ manageTeamButton (); landingButton () ]
-    | ManageTeamPage -> [ gameButton (); landingButton () ]
+    | LandingPage -> [ manageTeamButton (); startGameButton () ]
+    | StartGamePage -> [ manageTeamButton (); landingButton () ]
+    | GamePage -> [ manageTeamButton (); landingButton (); startGameButton () ]
+    | ManageTeamPage -> [ landingButton (); startGameButton (); gameButton () ]
 
   let render (dispatch: Msg -> unit) (state: State) =
     Html.div [
@@ -105,7 +114,7 @@ module Layout =
           ]
         ]
 
-        if state.CurrentPage <> LandingPage then
+        if state.CurrentPage = GamePage || state.CurrentPage = ManageTeamPage then
           Html.div [
             prop.className "flex bg-purple-200 gap-4 p-4 justify-center"
             prop.children [
