@@ -126,6 +126,53 @@ module Layout =
       ]
     ]
 
+  let private hamburgerIcon =
+    Svg.svg [
+      svg.viewBox (0, 0, 24, 24)
+      svg.fill "none"
+      svg.stroke "currentColor"
+      svg.strokeWidth 1.5
+      svg.className "size-6"
+      svg.children [
+        Svg.path [
+          svg.d "M4 6h16"
+          svg.strokeLineCap "round"
+          svg.strokeLineJoin "round"
+        ]
+        Svg.path [
+          svg.d "M4 12h16"
+          svg.strokeLineCap "round"
+          svg.strokeLineJoin "round"
+        ]
+        Svg.path [
+          svg.d "M4 18h16"
+          svg.strokeLineCap "round"
+          svg.strokeLineJoin "round"
+        ]
+      ]
+    ]
+
+  let private closeIcon =
+    Svg.svg [
+      svg.viewBox (0, 0, 24, 24)
+      svg.fill "none"
+      svg.stroke "currentColor"
+      svg.strokeWidth 1.5
+      svg.className "size-6"
+      svg.children [
+        Svg.path [
+          svg.d "M6 6l12 12"
+          svg.strokeLineCap "round"
+          svg.strokeLineJoin "round"
+        ]
+        Svg.path [
+          svg.d "M6 18L18 6"
+          svg.strokeLineCap "round"
+          svg.strokeLineJoin "round"
+        ]
+      ]
+    ]
+
   let private badge text =
     Html.span [
       prop.className "ml-auto w-9 min-w-max rounded-full bg-white px-2.5 py-0.5 text-center text-xs font-medium whitespace-nowrap text-gray-600 outline-1 -outline-offset-1 outline-gray-200 dark:bg-gray-900 dark:text-white dark:outline-white/15"
@@ -146,7 +193,8 @@ module Layout =
         prop.className classes
         prop.onClick (fun (ev: MouseEvent) ->
           ev.preventDefault()
-          dispatch (NavigateToPage page))
+          dispatch (NavigateToPage page)
+          dispatch (SetSidebarOpen false))
         prop.children [
           icon isActive
           Html.span label
@@ -171,7 +219,8 @@ module Layout =
         prop.className "group flex gap-x-3 rounded-md p-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:text-indigo-600 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white"
         prop.onClick (fun (ev: MouseEvent) ->
           ev.preventDefault()
-          dispatch (NavigateToPage ManageTeamPage))
+          dispatch (NavigateToPage ManageTeamPage)
+          dispatch (SetSidebarOpen false))
         prop.children [
           Html.span [
             prop.className "flex size-6 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white text-[0.625rem] font-medium text-gray-400 group-hover:border-indigo-600 group-hover:text-indigo-600 dark:border-white/15 dark:bg-white/5 dark:group-hover:border-white/20 dark:group-hover:text-white"
@@ -277,72 +326,76 @@ module Layout =
         GamePage, "Live Game", whistleIcon, (if onFieldCount > 0 then Some (string onFieldCount) else None)
       ]
       |> List.map (fun (page, label, icon, badgeText) -> navLink dispatch state page label icon badgeText)
+    let sidebarContent extraClass =
+      let baseClass = "flex flex-1 flex-col gap-y-5 overflow-y-auto"
+      let classes =
+        if String.IsNullOrWhiteSpace extraClass then
+          baseClass
+        else
+          $"{baseClass} {extraClass}"
 
-    Html.div [
-      prop.className "flex min-h-screen bg-white text-gray-900 dark:bg-gray-950 dark:text-white"
-      prop.children [
-        Html.aside [
-          prop.className "relative flex w-72 shrink-0 flex-col gap-y-5 overflow-y-auto border-r border-gray-200 bg-white px-6 py-6 dark:border-white/10 dark:bg-gray-900"
-          prop.children [
-            Html.div [
-              prop.className "relative flex h-16 shrink-0 items-center"
-              prop.children [
-                Html.img [
-                  prop.className "h-8 w-auto dark:hidden"
-                  prop.src "https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=600"
-                  prop.alt "BenchBoss"
-                ]
-                Html.img [
-                  prop.className "hidden h-8 w-auto dark:block"
-                  prop.src "https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=500"
-                  prop.alt "BenchBoss"
-                ]
+      Html.div [
+        prop.className classes
+        prop.children [
+          Html.div [
+            prop.className "relative flex h-16 shrink-0 items-center"
+            prop.children [
+              Html.img [
+                prop.className "h-8 w-auto dark:hidden"
+                prop.src "https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=600"
+                prop.alt "BenchBoss"
+              ]
+              Html.img [
+                prop.className "hidden h-8 w-auto dark:block"
+                prop.src "https://tailwindcss.com/plus-assets/img/logos/mark.svg?color=indigo&shade=500"
+                prop.alt "BenchBoss"
               ]
             ]
-            Html.nav [
-              prop.className "relative flex flex-1 flex-col"
-              prop.children [
-                Html.ul [
-                  prop.className "flex flex-1 flex-col gap-y-7"
-                  prop.children [
-                    Html.li [
-                      Html.ul [
-                        prop.className "-mx-2 space-y-1"
-                        prop.children navItems
-                      ]
+          ]
+          Html.nav [
+            prop.className "relative flex flex-1 flex-col"
+            prop.children [
+              Html.ul [
+                prop.className "flex flex-1 flex-col gap-y-7"
+                prop.children [
+                  Html.li [
+                    Html.ul [
+                      prop.className "-mx-2 space-y-1"
+                      prop.children navItems
                     ]
-                    Html.li [
-                      Html.div [
-                        prop.className "text-xs font-semibold uppercase tracking-wider text-gray-400"
-                        prop.text "Your roster"
-                      ]
-                      Html.ul [
-                        prop.className "-mx-2 mt-2 space-y-1"
-                        prop.children rosterItems
-                      ]
+                  ]
+                  Html.li [
+                    Html.div [
+                      prop.className "text-xs font-semibold uppercase tracking-wider text-gray-400"
+                      prop.text "Your roster"
                     ]
-                    Html.li [
-                      prop.className "mt-auto"
-                      prop.children [
-                        Html.a [
-                          prop.href "#"
-                          prop.className "flex items-center gap-x-4 rounded-md px-4 py-3 text-sm font-semibold text-gray-900 hover:bg-gray-50 dark:text-white dark:hover:bg-white/5"
-                          prop.onClick (fun (ev: MouseEvent) ->
-                            ev.preventDefault()
-                            dispatch (NavigateToPage ManageTeamPage))
-                          prop.children [
-                            Html.div [
-                              prop.className "size-8 rounded-full bg-indigo-600 text-sm font-semibold text-white shadow-sm flex items-center justify-center"
-                              prop.text "BB"
-                            ]
-                            Html.span [
-                              prop.className "sr-only"
-                              prop.text "Your profile"
-                            ]
-                            Html.span [
-                              prop.ariaHidden true
-                              prop.text "Coach Desk"
-                            ]
+                    Html.ul [
+                      prop.className "-mx-2 mt-2 space-y-1"
+                      prop.children rosterItems
+                    ]
+                  ]
+                  Html.li [
+                    prop.className "mt-auto"
+                    prop.children [
+                      Html.a [
+                        prop.href "#"
+                        prop.className "flex items-center gap-x-4 rounded-md px-4 py-3 text-sm font-semibold text-gray-900 hover:bg-gray-50 dark:text-white dark:hover:bg-white/5"
+                        prop.onClick (fun (ev: MouseEvent) ->
+                          ev.preventDefault()
+                          dispatch (NavigateToPage ManageTeamPage)
+                          dispatch (SetSidebarOpen false))
+                        prop.children [
+                          Html.div [
+                            prop.className "size-8 rounded-full bg-indigo-600 text-sm font-semibold text-white shadow-sm flex items-center justify-center"
+                            prop.text "BB"
+                          ]
+                          Html.span [
+                            prop.className "sr-only"
+                            prop.text "Your profile"
+                          ]
+                          Html.span [
+                            prop.ariaHidden true
+                            prop.text "Coach Desk"
                           ]
                         ]
                       ]
@@ -353,31 +406,91 @@ module Layout =
             ]
           ]
         ]
+      ]
+
+    let desktopSidebar =
+      Html.aside [
+        prop.className "hidden lg:flex lg:w-72 lg:flex-col lg:border-r lg:border-gray-200 lg:bg-white dark:lg:border-white/10 dark:lg:bg-gray-900"
+        prop.children [
+          Html.div [
+            prop.className "flex flex-1 flex-col px-6 py-6"
+            prop.children [ sidebarContent "" ]
+          ]
+        ]
+      ]
+
+    let mobileSidebar =
+      if not state.IsSidebarOpen then
+        Html.none
+      else
         Html.div [
-          prop.className "flex flex-1 flex-col"
+          prop.className "lg:hidden"
           prop.children [
-            Html.header [
-              prop.className "flex items-center justify-between border-b border-gray-200 bg-white px-8 py-6 shadow-sm dark:border-white/10 dark:bg-gray-900"
+            Html.div [
+              prop.className "fixed inset-0 z-40 bg-gray-900/60"
+              prop.onClick (fun _ -> dispatch (SetSidebarOpen false))
+            ]
+            Html.aside [
+              prop.className "fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-gray-200 bg-white px-6 py-6 shadow-xl dark:border-white/10 dark:bg-gray-900"
               prop.children [
-                Html.div [
-                  prop.className "flex flex-col"
-                  prop.children [
-                    Html.h1 [
-                      prop.className "text-lg font-semibold text-gray-900 dark:text-white"
-                      prop.text (headerTitle state)
-                    ]
-                    Html.span [
-                      prop.className "text-sm text-gray-500 dark:text-gray-300"
-                      prop.text (headerSubtitle state)
-                    ]
-                  ]
+                Html.button [
+                  prop.className "absolute right-4 top-4 inline-flex items-center justify-center rounded-md p-2 text-gray-500 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-gray-300 dark:hover:text-white"
+                  prop.ariaLabel "Close navigation"
+                  prop.onClick (fun _ -> dispatch (SetSidebarOpen false))
+                  prop.children [ closeIcon ]
                 ]
-                headerActions dispatch state
+                sidebarContent "mt-8"
               ]
             ]
-            Html.main [
-              prop.className "flex-1 overflow-y-auto"
-              prop.children [ pageContent ]
+          ]
+        ]
+
+    Html.div [
+      prop.className "relative min-h-screen bg-white text-gray-900 dark:bg-gray-950 dark:text-white"
+      prop.children [
+        mobileSidebar
+        Html.div [
+          prop.className "flex min-h-screen"
+          prop.children [
+            desktopSidebar
+            Html.div [
+              prop.className "flex flex-1 flex-col"
+              prop.children [
+                Html.header [
+                  prop.className "flex items-center justify-between border-b border-gray-200 bg-white px-4 py-5 shadow-sm sm:px-6 lg:px-8 dark:border-white/10 dark:bg-gray-900"
+                  prop.children [
+                    Html.div [
+                      prop.className "flex items-center gap-4"
+                      prop.children [
+                        Html.button [
+                          prop.className "inline-flex items-center justify-center rounded-md p-2 text-gray-500 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:text-gray-300 dark:hover:text-white lg:hidden"
+                          prop.ariaLabel "Open navigation"
+                          prop.onClick (fun _ -> dispatch (SetSidebarOpen true))
+                          prop.children [ hamburgerIcon ]
+                        ]
+                        Html.div [
+                          prop.className "flex flex-col"
+                          prop.children [
+                            Html.h1 [
+                              prop.className "text-lg font-semibold text-gray-900 dark:text-white"
+                              prop.text (headerTitle state)
+                            ]
+                            Html.span [
+                              prop.className "text-sm text-gray-500 dark:text-gray-300"
+                              prop.text (headerSubtitle state)
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                    headerActions dispatch state
+                  ]
+                ]
+                Html.main [
+                  prop.className "flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8"
+                  prop.children [ pageContent ]
+                ]
+              ]
             ]
           ]
         ]

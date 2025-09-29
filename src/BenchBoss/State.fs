@@ -53,7 +53,7 @@ module State =
           Players = normalizedPlayers
           FieldSlots = clampedSlots }
 
-    { state with Game = validatedGame }
+    { state with Game = validatedGame; IsSidebarOpen = false }
 
 
   let private empty () : State =
@@ -66,6 +66,7 @@ module State =
       Events = []
       LastTick = None
       CurrentModal = NoModal
+      IsSidebarOpen = false
     }
 
   let init () =
@@ -305,7 +306,8 @@ module State =
         { state with CurrentModal = modalType }, Cmd.none
     | HideModal ->
         { state with CurrentModal = NoModal }, Cmd.none
-    | NavigateToPage page -> { state with CurrentPage = page }, Cmd.none
+    | NavigateToPage page -> { state with CurrentPage = page; IsSidebarOpen = false }, Cmd.none
+    | SetSidebarOpen isOpen -> { state with IsSidebarOpen = isOpen }, Cmd.none
     | SetFieldSlots slots ->
         let clamped = clampFieldSlots slots
         let normalizedPlayers = enforceFieldSlotLimit clamped state.Game.Players

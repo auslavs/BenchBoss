@@ -127,6 +127,7 @@ module Types =
     Events: ScoreEvent list
     LastTick: DateTime option
     CurrentModal: ModalType
+    IsSidebarOpen: bool
   }
 
 
@@ -146,6 +147,7 @@ module Types =
     | ShowModal of ModalType
     | HideModal
     | NavigateToPage of Page
+    | SetSidebarOpen of bool
     | SetFieldSlots of int
     | UpdateGameName of string
     | StartGame
