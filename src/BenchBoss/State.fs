@@ -60,7 +60,7 @@ module State =
     {
       CurrentPage = LandingPage
       TeamPlayers = []
-      Game = Game.create "Default Game" defaultFieldSlots []
+      Game = Game.create "" defaultFieldSlots []
       OurScore = 0
       OppScore = 0
       Events = []

@@ -43,40 +43,6 @@ module GameSetupView =
       ]
     ]
 
-  [<ReactComponent>]
-  let private AddPlayerForm (dispatch: Msg -> unit) =
-    let name, setName = React.useState ""
-
-    let submit () =
-      let trimmed = name.Trim()
-      if not (String.IsNullOrWhiteSpace trimmed) then
-        dispatch (ConfirmAddTeamPlayer trimmed)
-        setName ""
-
-    let isDisabled = String.IsNullOrWhiteSpace(name.Trim())
-
-    Html.form [
-      prop.className "mt-4 flex flex-col gap-3 sm:flex-row"
-      prop.onSubmit (fun ev ->
-        ev.preventDefault()
-        submit ())
-      prop.children [
-        Html.input [
-          prop.type' "text"
-          prop.value name
-          prop.onChange setName
-          prop.placeholder "Add a player to today's roster"
-          prop.className "flex-1 rounded-lg border border-gray-300 px-4 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-white/15 dark:bg-gray-900 dark:text-white"
-        ]
-        Html.button [
-          prop.type' "submit"
-          prop.className "inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 disabled:cursor-not-allowed disabled:bg-indigo-300 dark:disabled:bg-indigo-700/40"
-          prop.disabled isDisabled
-          prop.text "Add player"
-        ]
-      ]
-    ]
-
   let private fieldSlotControls (state: State) (dispatch: Msg -> unit) =
     let slots = state.Game.FieldSlots
 
@@ -97,10 +63,6 @@ module GameSetupView =
             Html.span [
               prop.className "text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-300"
               prop.text "Field positions"
-            ]
-            Html.span [
-              prop.className "text-2xl font-bold text-indigo-600 dark:text-indigo-300"
-              prop.text (string slots)
             ]
           ]
         ]
@@ -125,31 +87,6 @@ module GameSetupView =
             ]
           ]
         ]
-        Html.input [
-          prop.type' "range"
-          prop.className "w-full accent-indigo-600"
-          prop.min 1
-          prop.max maxSlots
-          prop.step 1
-          prop.value slots
-          prop.onChange handleChange
-        ]
-        Html.div [
-          prop.className "flex items-center justify-between gap-3 text-sm text-gray-500 dark:text-gray-300"
-          prop.children [
-            Html.span [
-              prop.text "Adjust how many players will start on the field."
-            ]
-            Html.input [
-              prop.type' "number"
-              prop.className "w-20 rounded-lg border border-gray-300 px-2 py-1 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-white/15 dark:bg-gray-900 dark:text-white"
-              prop.min 1
-              prop.max maxSlots
-              prop.value slots
-              prop.onChange handleChange
-            ]
-          ]
-        ]
       ]
     ]
 
@@ -161,8 +98,7 @@ module GameSetupView =
 
     let selectedCount = Set.count selectedPlayers
     let totalPlayers = state.TeamPlayers.Length
-    let missingPlayers = max 0 (state.Game.FieldSlots - selectedCount)
-    let canStart = selectedCount > 0 && missingPlayers = 0
+    let canStart = selectedCount > 0
 
     Html.section [
       prop.className "w-full py-10"
@@ -198,12 +134,12 @@ module GameSetupView =
                           prop.children [
                             Html.label [
                               prop.className "text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-300"
-                              prop.text "Game name"
+                              prop.text "Opponent"
                             ]
                             Html.input [
                               prop.type' "text"
                               prop.className "w-full rounded-lg border border-gray-300 px-4 py-2 text-base shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-white/15 dark:bg-gray-900 dark:text-white"
-                              prop.placeholder "Saturday scrimmage"
+                              prop.placeholder "Opposing team name"
                               prop.value state.Game.Name
                               prop.onChange (fun value -> dispatch (UpdateGameName value))
                             ]
@@ -213,54 +149,16 @@ module GameSetupView =
                         fieldSlotControls state dispatch
 
                         Html.div [
-                          prop.className "grid grid-cols-1 gap-4 sm:grid-cols-2"
-                          prop.children [
-                            Html.div [
-                              prop.className "rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-3 text-indigo-900 dark:border-indigo-400/40 dark:bg-indigo-500/10 dark:text-indigo-100"
-                              prop.children [
-                                Html.p [
-                                  prop.className "text-xs font-semibold uppercase tracking-wide"
-                                  prop.text "Field positions"
-                                ]
-                                Html.p [
-                                  prop.className "text-3xl font-bold"
-                                  prop.text (string state.Game.FieldSlots)
-                                ]
-                              ]
+                          if selectedCount = 0 then
+                            Html.p [
+                              prop.className "rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700 dark:border-amber-400/40 dark:bg-amber-500/10 dark:text-amber-100"
+                              prop.text "Select players from your roster to build the starting lineup."
                             ]
-                            Html.div [
-                              prop.className "rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-gray-900 dark:border-white/10 dark:bg-gray-900/40 dark:text-gray-100"
-                              prop.children [
-                                Html.p [
-                                  prop.className "text-xs font-semibold uppercase tracking-wide"
-                                  prop.text "Players selected"
-                                ]
-                                Html.p [
-                                  prop.className "text-3xl font-bold"
-                                  prop.text (string selectedCount)
-                                ]
-                              ]
+                          else
+                            Html.p [
+                              prop.className "rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 dark:border-green-400/40 dark:bg-green-500/10 dark:text-green-100"
+                              prop.text "Lineup locked in! You're ready to start the match."
                             ]
-                          ]
-                        ]
-
-                        Html.div [
-                          match selectedCount, missingPlayers with
-                          | 0, _ ->
-                              Html.p [
-                                prop.className "rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700 dark:border-amber-400/40 dark:bg-amber-500/10 dark:text-amber-100"
-                                prop.text "Select players from your roster to build the starting lineup."
-                              ]
-                          | _, m when m > 0 ->
-                              Html.p [
-                                prop.className "rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700 dark:border-amber-400/40 dark:bg-amber-500/10 dark:text-amber-100"
-                                prop.text $"Choose {m} more player(s) to fill every position."
-                              ]
-                          | _ ->
-                              Html.p [
-                                prop.className "rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 dark:border-green-400/40 dark:bg-green-500/10 dark:text-green-100"
-                                prop.text "Lineup locked in! You're ready to start the match."
-                              ]
                         ]
                       ]
                     ]
@@ -293,8 +191,6 @@ module GameSetupView =
                         ]
                       ]
                     ]
-
-                    AddPlayerForm dispatch
 
                     if state.TeamPlayers.IsEmpty then
                       Html.div [
