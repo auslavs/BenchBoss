@@ -18,17 +18,17 @@ module Component =
     let goalUs = GoalUs >> dispatch
     let goalThem = fun _ -> dispatch GoalThem
 
-    Html.div [
-      prop.className "flex flex-col min-h-screen"
-      prop.children [
-        Layout.render dispatch state
+    let pageContent =
+      match state.CurrentPage with
+      | LandingPage -> LandingPage.render state dispatch
+      | StartGamePage -> StartGamePage.render state dispatch
+      | GamePage -> GamePage.render state dispatch
+      | ManageTeamPage -> ManageTeamPage.render state dispatch
 
-        // Page content based on current page
-        match state.CurrentPage with
-        | LandingPage -> LandingPage.render state dispatch
-        | StartGamePage -> StartGamePage.render state dispatch
-        | GamePage -> GamePage.render state dispatch
-        | ManageTeamPage -> ManageTeamPage.render state dispatch
+    Html.div [
+      prop.className "relative min-h-screen"
+      prop.children [
+        Layout.render dispatch state pageContent
 
         Modals.OurTeam.View(
           state.CurrentModal = OurTeamScoreModal,
