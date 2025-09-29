@@ -173,13 +173,13 @@ module Layout =
       ]
     ]
 
-  let private badge text =
+  let private badge (text: string) =
     Html.span [
       prop.className "ml-auto w-9 min-w-max rounded-full bg-white px-2.5 py-0.5 text-center text-xs font-medium whitespace-nowrap text-gray-600 outline-1 -outline-offset-1 outline-gray-200 dark:bg-gray-900 dark:text-white dark:outline-white/15"
       prop.text text
     ]
 
-  let private navLink dispatch state page label icon badgeText =
+  let private navLink dispatch state page (label: string) (icon: bool -> ReactElement) (badgeText: string option) =
     let isActive = state.CurrentPage = page
     let classes =
       if isActive then
