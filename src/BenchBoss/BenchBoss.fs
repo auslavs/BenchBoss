@@ -5,9 +5,50 @@ module Component =
   open Feliz.UseElmish
   open BenchBossApp.Components.BenchBoss.Types
   open BenchBossApp.Components.BenchBoss
+  open Feliz.Router
+  open Browser.Dom
   [<ReactComponent>]
   let Render () =
     let state, dispatch = React.useElmish(State.init, State.updateWithSave)
+
+    // --- Routing helpers (inlined) ---
+    let pageSegments = function
+      | HomePage -> [ "" ]
+      | GamePage -> [ "game" ]
+      | ManageTeamPage -> [ "manage-team" ]
+
+    let pageHref p = pageSegments p |> Router.format
+
+    let parseUrl segments =
+      match segments with
+      | []
+      | ["" ] -> HomePage
+      | [ "game" ] -> GamePage
+      | [ "manage-team" ] -> ManageTeamPage
+      | _ -> HomePage
+
+    let currentPageFromUrl () = Router.currentPath() |> List.map (fun s -> s.Trim().ToLower()) |> parseUrl
+
+    // On initial mount, align state with URL
+    React.useEffectOnce(fun () ->
+      let initial = currentPageFromUrl()
+      if initial <> state.CurrentPage then dispatch (NavigateToPage initial)
+      ())
+
+    // Listen to future url changes (back/forward) via popstate
+    React.useEffectOnce(fun () ->
+      let handler = fun (_:obj) ->
+        let p = currentPageFromUrl()
+        if p <> state.CurrentPage then dispatch (NavigateToPage p)
+      window.addEventListener("popstate", handler)
+      { new System.IDisposable with member _.Dispose() = window.removeEventListener("popstate", handler) })
+
+    // Push state.CurrentPage to URL when it changes
+    React.useEffect((fun () ->
+      let desired = pageHref state.CurrentPage
+      let current = Router.currentPath() |> Router.format
+      if current <> desired then Router.navigatePath(desired)
+      ), [| box state.CurrentPage |])
 
     let startTimer = fun _ -> dispatch StartTimer
     let pauseTimer = fun _ -> dispatch PauseTimer
@@ -27,6 +68,7 @@ module Component =
         match state.CurrentPage with
         | GamePage -> GamePage.render state dispatch
         | ManageTeamPage -> ManageTeamPage.render state dispatch
+        | HomePage -> Html.h1 [ prop.text "Welcome to BenchBoss! Select a game to get started." ]
 
         Modals.OurTeam.View(
           state.CurrentModal = OurTeamScoreModal,

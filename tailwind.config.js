@@ -1,15 +1,15 @@
 /** @type {import('tailwindcss').Config} */
-module.exports = {
+export default {
   content: [
-    "./index.html",
-    "./src/**/*.{fs,html,js}"
+    './index.html',
+    './src/**/*.{fs,html,js}'
   ],
   theme: {
     extend: {
       transitionProperty: {
-        'height': 'height'
-      },
-    },
+        height: 'height'
+      }
+    }
   },
   plugins: []
 }

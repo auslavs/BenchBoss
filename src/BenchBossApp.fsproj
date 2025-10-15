@@ -5,13 +5,17 @@
   </PropertyGroup>
   <ItemGroup>
     <None Include="index.html" />
+    <Compile Include="HeadlessUI.fs" />
     <Compile Include="BenchBoss\Types.fs" />
     <Compile Include="BenchBoss\Store.fs" />
     <Compile Include="BenchBoss\State.fs" />
+    <Compile Include="BenchBoss\Routing.fs" />
     <Compile Include="BenchBoss\Modals\Common.fs" />
     <Compile Include="BenchBoss\Modals\OurTeam.fs" />
     <Compile Include="BenchBoss\Modals\OpposingTeam.fs" />
     <Compile Include="BenchBoss\Modals\TimeManager.fs" />
+    <Compile Include="BenchBoss\Logo.fs" />
+    <Compile Include="BenchBoss\Navigation.fs" />
     <Compile Include="BenchBoss\Layout.fs" />
     <Compile Include="BenchBoss\GamePage.fs" />
     <Compile Include="BenchBoss\ManageTeamPage.fs" />
@@ -23,5 +27,6 @@
     <PackageReference Include="Feliz.UseElmish" Version="2.5.0" />
     <PackageReference Include="Fable.React" Version="9.4.0" />
     <PackageReference Include="Thoth.Json" Version="10.4.1" />
+    <PackageReference Include="Feliz.Router" Version="4.0.0" />
   </ItemGroup>
 </Project>

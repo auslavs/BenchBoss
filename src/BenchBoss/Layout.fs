@@ -8,6 +8,9 @@ module Layout =
     Html.div [
       prop.className "flex flex-col"
       prop.children [
+        // Global navigation bar
+        BenchBossApp.Components.Navigation.NavBar(NavigateToPage >> dispatch, state.CurrentPage)
+
         Html.div [
           prop.className "flex bg-purple-700 p-2 text-3xl font-bold w-full text-center text-white items-center justify-between"
           prop.children [
@@ -45,6 +48,7 @@ module Layout =
               prop.className "flex items-center"
               prop.children [
                 match state.CurrentPage with
+                | HomePage -> Html.none // NavBar covers navigation; no specific home content yet
                 | GamePage ->
                   Html.button [
                     prop.className "bg-purple-600 hover:bg-purple-500 focus:ring-2 focus:ring-purple-300 text-white rounded-full w-10 h-10 inline-flex items-center justify-center shadow transition-colors"

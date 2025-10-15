@@ -5,7 +5,6 @@ module Types =
 
   open System
 
-  // Domain types
   type PlayerId = Guid
 
   type TeamPlayer = {
@@ -58,6 +57,7 @@ module Types =
     | EditPlayerModal of TeamPlayer
 
   type Page =
+    | HomePage
     | GamePage
     | ManageTeamPage
 
