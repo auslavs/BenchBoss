@@ -61,6 +61,7 @@ module Types =
     | GamePage
     | ManageTeamPage
     | GameSetupPage
+    | NotFoundPage
 
   type RunningTimerState =
     {| Half: Half; Elapsed: int; LastTick: DateTime |}

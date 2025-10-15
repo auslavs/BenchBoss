@@ -38,11 +38,7 @@ module Navigation =
         ]
       ]
 
-    let pageHref = function
-      | HomePage -> Router.format [ "" ]
-      | GamePage -> Router.format [ "game" ]
-      | ManageTeamPage -> Router.format [ "manage-team" ]
-      | GameSetupPage -> Router.format [ "game-setup" ]
+    let pageHref page = Routing.href page
 
     let menuItem isCurrentPage (text: string) (page:Page) (onNavigate: unit -> unit) =
       let defaultClasses =
@@ -70,23 +66,19 @@ module Navigation =
       |}
 
   module private Desktop =
-    let private pageHref = function
-      | HomePage -> Router.format [ "" ]
-      | GamePage -> Router.format [ "game" ]
-      | ManageTeamPage -> Router.format [ "manage-team" ]
-      | GameSetupPage -> Router.format [ "game-setup" ]
+    let private pageHref page = Routing.href page
 
     let navLink isCurrentPage (text: string) (onClick: unit -> unit) (page:Page) =
       let defaultClasses =
-        "inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-300 dark:hover:border-white/20 dark:hover:text-white"
+        "inline-flex items-center cursor-pointer border-b-2 border-transparent px-1 pt-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-300 dark:hover:border-white/20 dark:hover:text-white"
       let currentPageClasses =
-        "inline-flex items-center border-b-2 border-purple-600 px-1 pt-1 text-sm font-medium text-gray-900 dark:border-purple-500 dark:text-white"
+        "inline-flex items-center cursor-pointer border-b-2 border-purple-600 px-1 pt-1 text-sm font-medium text-gray-900 dark:border-purple-500 dark:text-white"
 
       Html.a [
         prop.href (pageHref page)
         prop.className (if isCurrentPage then currentPageClasses else defaultClasses)
         prop.text text
-        prop.onClick (fun _ -> onClick())
+        prop.onClick (fun ev -> ev.preventDefault(); onClick())
       ]
 
     let leftSideNav (navigate: Page -> unit) (links: ReactElement list) =
@@ -94,7 +86,7 @@ module Navigation =
         prop.className "flex"
         prop.children [
           Html.button [
-            prop.className "flex shrink-0 items-center gap-2 group"
+            prop.className "flex shrink-0 items-center gap-2 group cursor-pointer"
             prop.onClick (fun _ -> navigate HomePage)
             prop.children [
               Logo.BenchBossLogo()

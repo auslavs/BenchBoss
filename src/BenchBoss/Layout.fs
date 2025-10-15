@@ -47,35 +47,7 @@ module Layout =
                 ]
               ]
             ]
-
-            // Right side navigation button depending on page
-            Html.div [
-              prop.className "w-10 flex items-center justify-end"
-              prop.children [
-                match state.CurrentPage with
-                | HomePage | GameSetupPage -> Html.none
-                | GamePage ->
-                  Html.button [
-                    prop.className "bg-purple-600 hover:bg-purple-500 focus:ring-2 focus:ring-purple-300 text-white rounded-full w-10 h-10 inline-flex items-center justify-center shadow transition-colors"
-                    prop.ariaLabel "Team Management"
-                    prop.title "Manage Teams and Players"
-                    prop.onClick (fun _ -> dispatch (NavigateToPage ManageTeamPage))
-                    prop.children [ Html.img [ prop.src "assets/team.svg"; prop.alt "Team Management"; prop.className "w-5 h-5" ] ]
-                  ]
-                | ManageTeamPage ->
-                  Html.button [
-                    prop.className "bg-purple-600 hover:bg-purple-500 focus:ring-2 focus:ring-purple-300 text-white rounded-full w-10 h-10 inline-flex items-center justify-center shadow transition-colors"
-                    prop.ariaLabel "Back to Game"
-                    prop.title "Back to Soccer Game"
-                    prop.onClick (fun _ -> dispatch (NavigateToPage GamePage))
-                    prop.children [ Html.img [ prop.src "assets/soccer.svg"; prop.alt "Soccer Game"; prop.className "w-5 h-5" ] ]
-                  ]
-              ]
-            ]
           ]
         ]
       ]
     ]
-
-
-    

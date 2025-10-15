@@ -43,6 +43,10 @@ npm run start           # Start Fable compiler + Vite dev server
 npm run build       # Compile and build to /docs directory
 ```
 
+### Build for testing
+When testing if the application builds, prefer to use `npm run start` over `npm run build`.
+This is so that I (the user that you are assisting) can see the application in action and catch any issues early.
+
 ## **Key F# Concepts Used**
 
 ### Indentation

@@ -179,27 +179,6 @@ module GamePage =
           prop.className "max-w-4xl mx-auto"
           prop.children [
 
-            // Control bar
-            Html.div [
-              prop.className "flex items-center justify-end mb-4 gap-3 text-sm"
-              prop.children [
-                Html.label [
-                  prop.className "font-medium"
-                  prop.text "Players on Field"
-                ]
-                Html.select [
-                  prop.className "border rounded px-2 py-1 bg-white"
-                  prop.value state.FieldPlayerTarget
-                  // Feliz onChange for select often yields obj/string; parse manually
-                  prop.onChange (fun (value: string) ->
-                    match System.Int32.TryParse value with
-                    | true, v -> dispatch (SetFieldPlayerTarget v)
-                    | _ -> () )
-                  prop.children [ for n in 4..11 -> Html.option [ prop.value n; prop.text (string n) ] ]
-                ]
-              ]
-            ]
-
             // Field layout
             Html.div [
               prop.className "bg-green-200 border-4 border-green-800 rounded-lg p-8 relative"
@@ -238,13 +217,9 @@ module GamePage =
                                 |> List.sumBy (fun (r: GamePlayer option array) -> r.Length)
                               priorCount + i
                             Html.div [
-                              prop.key ($"slot-{slotGlobalIndex}")
+                              prop.key $"slot-{slotGlobalIndex}"
                               prop.className "w-full sm:w-44 max-w-full"
                               prop.children [
-                                Html.div [
-                                  prop.className "text-center text-[10px] uppercase tracking-wide text-green-900 mb-1 opacity-60"
-                                  prop.text ($"Pos {slotGlobalIndex + 1}")
-                                ]
                                 fieldSlot slotGlobalIndex row[i] dispatch
                               ]
                             ]

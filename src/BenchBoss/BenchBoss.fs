@@ -11,25 +11,8 @@ module Component =
   let Render () =
     let state, dispatch = React.useElmish(State.init, State.updateWithSave)
 
-    // --- Routing helpers (inlined) ---
-    let pageSegments = function
-      | HomePage -> [ "" ]
-      | GamePage -> [ "game" ]
-      | ManageTeamPage -> [ "manage-team" ]
-      | GameSetupPage -> [ "game-setup" ]
-
-    let pageHref p = pageSegments p |> Router.format
-
-    let parseUrl segments =
-      match segments with
-      | []
-      | ["" ] -> HomePage
-      | [ "game" ] -> GamePage
-      | [ "manage-team" ] -> ManageTeamPage
-      | [ "game-setup" ] -> GameSetupPage
-      | _ -> HomePage
-
-    let currentPageFromUrl () = Router.currentPath() |> List.map (fun s -> s.Trim().ToLower()) |> parseUrl
+    // Centralized routing via Routing module
+    let currentPageFromUrl () = Routing.currentPageFromUrl()
 
     // On initial mount, align state with URL
     React.useEffectOnce(fun () ->
@@ -47,7 +30,7 @@ module Component =
 
     // Push state.CurrentPage to URL when it changes
     React.useEffect((fun () ->
-      let desired = pageHref state.CurrentPage
+      let desired = Routing.href state.CurrentPage
       let current = Router.currentPath() |> Router.format
       if current <> desired then Router.navigatePath(desired)
       ), [| box state.CurrentPage |])
@@ -65,13 +48,13 @@ module Component =
       prop.className "flex flex-col min-h-screen"
       prop.children [
         Layout.render dispatch state
-
         // Page content based on current page
         (match state.CurrentPage with
          | GamePage -> GamePage.render state dispatch
          | ManageTeamPage -> ManageTeamPage.render state dispatch
          | GameSetupPage -> BenchBossApp.Components.BenchBoss.GameSetupPage.View state dispatch
-         | HomePage -> BenchBossApp.Components.BenchBoss.HomePage.View state dispatch)
+         | HomePage -> BenchBossApp.Components.BenchBoss.HomePage.View state dispatch
+         | Page.NotFoundPage -> BenchBossApp.Components.BenchBoss.NotFoundPage.View dispatch)
 
         Modals.OurTeam.View(
           state.CurrentModal = OurTeamScoreModal,

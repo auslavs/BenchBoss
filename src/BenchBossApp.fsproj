@@ -19,8 +19,9 @@
     <Compile Include="BenchBoss\Layout.fs" />
     <Compile Include="BenchBoss\GamePage.fs" />
     <Compile Include="BenchBoss\ManageTeamPage.fs" />
-  <Compile Include="BenchBoss\HomePage.fs" />
-  <Compile Include="BenchBoss\GameSetupPage.fs" />
+    <Compile Include="BenchBoss\HomePage.fs" />
+    <Compile Include="BenchBoss\GameSetupPage.fs" />
+    <Compile Include="BenchBoss\NotFoundPage.fs" />
     <Compile Include="BenchBoss\BenchBoss.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
