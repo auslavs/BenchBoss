@@ -8,6 +8,7 @@ module Routing =
     | HomePage -> [ "" ]
     | GamePage -> [ "game" ]
     | ManageTeamPage -> [ "manage-team" ]
+    | GameSetupPage -> [ "game-setup" ]
 
   let href page =
     pageSegments page |> Router.format
@@ -18,6 +19,7 @@ module Routing =
     | ["" ] -> HomePage
     | [ "game" ] -> GamePage
     | [ "manage-team" ] -> ManageTeamPage
+    | [ "game-setup" ] -> GameSetupPage
     | _ -> HomePage
 
   let currentPageFromUrl () : Page =

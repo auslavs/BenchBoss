@@ -22,10 +22,18 @@ module Store =
       let parsed = Decode.Auto.unsafeFromString<State> json
       let state = parsed |> unbox<State>
 
-      if state.TeamPlayers.Length = 0 then
-        Some { state with TeamPlayers = defaultPlayers}
+      // Migration / normalization: ensure FieldPlayerTarget in bounds
+      let normalizedFieldTarget =
+        if state.FieldPlayerTarget < 4 then 4
+        elif state.FieldPlayerTarget > 11 then 11
+        else state.FieldPlayerTarget
+
+      let normalizedState = { state with FieldPlayerTarget = normalizedFieldTarget }
+
+      if normalizedState.TeamPlayers.Length = 0 then
+        Some { normalizedState with TeamPlayers = defaultPlayers}
       else
-        Some state
+        Some normalizedState
       
     with 
     | ex -> 
@@ -33,6 +41,14 @@ module Store =
       None
 
   let loadFromStorage validateState () : State option =
+    // Clean up legacy beta key (v5) if present – we intentionally drop it during beta
+    let legacyV5Key = "benchboss-state-v5"
+    let legacy = getItem legacyV5Key
+    if not (isNull legacy) then
+      // Remove it by overwriting with empty string (cannot call removeItem via Emit atm)
+      setItem(legacyV5Key, "")
+      printfn "Legacy v5 state detected and cleared."
+
     match getItem Constants.StorageKey with
     | null -> 
       printfn "No stored state found"

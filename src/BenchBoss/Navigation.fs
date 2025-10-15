@@ -42,6 +42,7 @@ module Navigation =
       | HomePage -> Router.format [ "" ]
       | GamePage -> Router.format [ "game" ]
       | ManageTeamPage -> Router.format [ "manage-team" ]
+      | GameSetupPage -> Router.format [ "game-setup" ]
 
     let menuItem isCurrentPage (text: string) (page:Page) (onNavigate: unit -> unit) =
       let defaultClasses =
@@ -73,6 +74,7 @@ module Navigation =
       | HomePage -> Router.format [ "" ]
       | GamePage -> Router.format [ "game" ]
       | ManageTeamPage -> Router.format [ "manage-team" ]
+      | GameSetupPage -> Router.format [ "game-setup" ]
 
     let navLink isCurrentPage (text: string) (onClick: unit -> unit) (page:Page) =
       let defaultClasses =
@@ -87,16 +89,17 @@ module Navigation =
         prop.onClick (fun _ -> onClick())
       ]
 
-    let leftSideNav (links: ReactElement list) =
+    let leftSideNav (navigate: Page -> unit) (links: ReactElement list) =
       Html.div [
         prop.className "flex"
         prop.children [
-          // Logo
-          Html.div [
-            prop.className "flex shrink-0 items-center"
-            prop.children [ Logo.BenchBossLogo() ]
+          Html.button [
+            prop.className "flex shrink-0 items-center gap-2 group"
+            prop.onClick (fun _ -> navigate HomePage)
+            prop.children [
+              Logo.BenchBossLogo()
+            ]
           ]
-          // Desktop Nav Links
           Html.div [
             prop.className "hidden sm:ml-6 sm:flex sm:space-x-8"
             prop.children links
@@ -117,7 +120,7 @@ module Navigation =
               prop.className "flex h-16 justify-between"
               prop.children [
                 // Left side - Logo and Nav Links
-                Desktop.leftSideNav [
+                Desktop.leftSideNav navigate [
                   Desktop.navLink (currentPage = HomePage) "Home" (fun () -> navigate HomePage) HomePage
                   Desktop.navLink (currentPage = ManageTeamPage) "Manage Team" (fun () -> navigate ManageTeamPage) ManageTeamPage
                   Desktop.navLink (currentPage = GamePage) "Current Game" (fun () -> navigate GamePage) GamePage

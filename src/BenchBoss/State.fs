@@ -24,6 +24,7 @@ module State =
       CurrentPage = GamePage
       TeamPlayers = []
       Game = Game.create "Default Game" []
+      FieldPlayerTarget = 4
       OurScore = 0
       OppScore = 0
       Events = []
@@ -296,9 +297,9 @@ module State =
         togglePlayerGameAvailability playerId state
     | ResetGame ->
       let newGame = Game.create "Default Game" []
+      // Preserve current page so if user ends game from Home they remain there
       let newState = 
         { state with 
-            CurrentPage = GamePage
             Game = newGame
             OurScore = 0
             OppScore = 0
@@ -307,6 +308,43 @@ module State =
             CurrentModal = NoModal
         }
       Store.save newState
+      newState, Cmd.none
+    | SetFieldPlayerTarget target ->
+      let clamped = target |> max 4 |> min 11
+      // If reducing target, bench excess on-field players (choose by highest PlayedSeconds to bench first?)
+      let onFieldPlayers = state.Game.Players |> List.filter (fun p -> p.InGameStatus = OnField)
+      let excess = onFieldPlayers.Length - clamped
+      let updatedPlayers =
+        if excess > 0 then
+          let toBench =
+            onFieldPlayers
+            |> List.sortByDescending (fun p -> p.PlayedSeconds) // bench those who've played most to balance
+            |> List.take excess
+            |> List.map (fun p -> p.Id)
+            |> Set.ofList
+          state.Game.Players |> List.map (fun p -> if toBench.Contains p.Id then { p with InGameStatus = OnBench } else p)
+        else state.Game.Players
+      let newState = { state with FieldPlayerTarget = clamped; Game = { state.Game with Players = updatedPlayers } }
+      Store.save newState
+      newState, Cmd.none
+    | StartNewGame (starting, bench) ->
+      // Build new game players from current TeamPlayers
+      let toGamePlayer status (tp:TeamPlayer) = 
+        { Id = tp.Id; Name = tp.Name; InGameStatus = status; PlayedSeconds = 0; BenchedSeconds = 0 }
+      let startingSet = starting |> Set.ofList
+      let benchSet = bench |> Set.ofList
+      // Filter out any ids not in roster, ignore duplicates
+      let rosterIds = state.TeamPlayers |> List.map _.Id |> Set.ofList
+      let validStarting = startingSet |> Set.filter (fun id -> rosterIds.Contains id)
+      let validBench = benchSet |> Set.filter (fun id -> rosterIds.Contains id && not (validStarting.Contains id))
+      let gamePlayers =
+        state.TeamPlayers
+        |> List.choose (fun tp ->
+            if validStarting.Contains tp.Id then Some (toGamePlayer OnField tp)
+            elif validBench.Contains tp.Id then Some (toGamePlayer OnBench tp)
+            else None)
+      let newGame = { Game.create "Game" gamePlayers with Timer = Stopped }
+      let newState = { state with Game = newGame; OurScore = 0; OppScore = 0; Events = []; CurrentPage = GamePage; LastTick = None; CurrentModal = NoModal }
       newState, Cmd.none
 
   let updateWithSave (msg: Msg) (state: State) : State * Cmd<Msg> =

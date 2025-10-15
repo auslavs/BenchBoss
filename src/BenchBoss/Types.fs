@@ -60,6 +60,7 @@ module Types =
     | HomePage
     | GamePage
     | ManageTeamPage
+    | GameSetupPage
 
   type RunningTimerState =
     {| Half: Half; Elapsed: int; LastTick: DateTime |}
@@ -118,6 +119,7 @@ module Types =
     CurrentPage: Page
     TeamPlayers: TeamPlayer list
     Game: Game
+    FieldPlayerTarget: int
     OurScore: int
     OppScore: int
     Events: ScoreEvent list
@@ -147,10 +149,12 @@ module Types =
     | ConfirmRemoveTeamPlayer of PlayerId
     | TogglePlayerGameAvailability of PlayerId
     | ResetGame
+    | StartNewGame of starting: PlayerId list * bench: PlayerId list
+  | SetFieldPlayerTarget of int
 
   module Constants =
     [<Literal>]
-    let StorageKey = "benchboss-state-v6"
+    let StorageKey = "benchboss-state-v7"
 
   // Helpers
   module Time =

@@ -16,6 +16,7 @@ module Component =
       | HomePage -> [ "" ]
       | GamePage -> [ "game" ]
       | ManageTeamPage -> [ "manage-team" ]
+      | GameSetupPage -> [ "game-setup" ]
 
     let pageHref p = pageSegments p |> Router.format
 
@@ -25,6 +26,7 @@ module Component =
       | ["" ] -> HomePage
       | [ "game" ] -> GamePage
       | [ "manage-team" ] -> ManageTeamPage
+      | [ "game-setup" ] -> GameSetupPage
       | _ -> HomePage
 
     let currentPageFromUrl () = Router.currentPath() |> List.map (fun s -> s.Trim().ToLower()) |> parseUrl
@@ -65,10 +67,11 @@ module Component =
         Layout.render dispatch state
 
         // Page content based on current page
-        match state.CurrentPage with
-        | GamePage -> GamePage.render state dispatch
-        | ManageTeamPage -> ManageTeamPage.render state dispatch
-        | HomePage -> Html.h1 [ prop.text "Welcome to BenchBoss! Select a game to get started." ]
+        (match state.CurrentPage with
+         | GamePage -> GamePage.render state dispatch
+         | ManageTeamPage -> ManageTeamPage.render state dispatch
+         | GameSetupPage -> BenchBossApp.Components.BenchBoss.GameSetupPage.View state dispatch
+         | HomePage -> BenchBossApp.Components.BenchBoss.HomePage.View state dispatch)
 
         Modals.OurTeam.View(
           state.CurrentModal = OurTeamScoreModal,

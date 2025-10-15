@@ -164,13 +164,13 @@ module GamePage =
       state.Game.Players 
       |> List.filter (fun p -> p.InGameStatus = OnField)
       |> List.sortBy (fun p -> p.PlayedSeconds)
-    
-    // For now, create dummy field slots to maintain the 4-slot layout
+    // Dynamic field slots based on configured target (defensive clamp)
+    let targetSlots = if state.FieldPlayerTarget < 4 then 4 elif state.FieldPlayerTarget > 11 then 11 else state.FieldPlayerTarget
     let fieldPlayers = 
-      let playerArray = Array.create 4 None
-      onFieldPlayers |> List.iteri (fun i p -> if i < 4 then playerArray[i] <- Some p)
+      let playerArray = Array.create targetSlots None
+      onFieldPlayers |> List.iteri (fun i p -> if i < targetSlots then playerArray[i] <- Some p)
       playerArray
-    
+
     Html.div [
       prop.className "flex-1 p-4 bg-gradient-to-b from-green-50 to-blue-50"
       prop.children [
@@ -179,24 +179,78 @@ module GamePage =
           prop.className "max-w-4xl mx-auto"
           prop.children [
 
+            // Control bar
+            Html.div [
+              prop.className "flex items-center justify-end mb-4 gap-3 text-sm"
+              prop.children [
+                Html.label [
+                  prop.className "font-medium"
+                  prop.text "Players on Field"
+                ]
+                Html.select [
+                  prop.className "border rounded px-2 py-1 bg-white"
+                  prop.value state.FieldPlayerTarget
+                  // Feliz onChange for select often yields obj/string; parse manually
+                  prop.onChange (fun (value: string) ->
+                    match System.Int32.TryParse value with
+                    | true, v -> dispatch (SetFieldPlayerTarget v)
+                    | _ -> () )
+                  prop.children [ for n in 4..11 -> Html.option [ prop.value n; prop.text (string n) ] ]
+                ]
+              ]
+            ]
+
             // Field layout
             Html.div [
               prop.className "bg-green-200 border-4 border-green-800 rounded-lg p-8 relative"
               prop.children [
-                
                 fieldMarkings
-
+                let rows : GamePlayer option array list =
+                  if targetSlots <= 4 then
+                    [ fieldPlayers ]
+                  elif targetSlots = 5 then
+                    [ fieldPlayers.[0..1]; fieldPlayers.[2..4] ]
+                  elif targetSlots = 6 then
+                    [ fieldPlayers.[0..2]; fieldPlayers.[3..5] ]
+                  elif targetSlots = 7 then
+                    [ fieldPlayers.[0..2]; fieldPlayers.[3..6] ]
+                  elif targetSlots = 8 then
+                    [ fieldPlayers.[0..2]; fieldPlayers.[3..5]; fieldPlayers.[6..7] ]
+                  elif targetSlots = 9 then
+                    [ fieldPlayers.[0..2]; fieldPlayers.[3..5]; fieldPlayers.[6..8] ]
+                  elif targetSlots = 10 then
+                    [ fieldPlayers.[0..2]; fieldPlayers.[3..5]; fieldPlayers.[6..7]; fieldPlayers.[8..9] ]
+                  else
+                    [ fieldPlayers.[0..2]; fieldPlayers.[3..5]; fieldPlayers.[6..8]; fieldPlayers.[9..10] ]
                 Html.div [
-                  prop.className "flex flex-col sm:flex-row sm:flex-wrap gap-4 justify-center items-start min-h-64 z-10 relative"
-                  prop.children ( fieldPlayers |> Array.mapi (fun i playerOpt ->
+                  prop.className "flex flex-col gap-6 justify-center items-stretch min-h-64 z-10 relative"
+                  prop.children [
+                    for (rowIdx, row) in rows |> List.indexed do
                       Html.div [
-                        prop.className "w-full sm:w-auto sm:min-w-48 sm:max-w-xs sm:flex-[0_1_48%] relative z-10"
+                        prop.key ($"row-{rowIdx}")
+                        prop.className "flex flex-col items-stretch gap-4 sm:flex-row sm:justify-center sm:gap-6"
                         prop.children [
-                          fieldSlot i playerOpt dispatch
+                          for i in 0 .. row.Length - 1 do
+                            let slotGlobalIndex =
+                              let priorCount =
+                                rows
+                                |> List.take rowIdx
+                                |> List.sumBy (fun (r: GamePlayer option array) -> r.Length)
+                              priorCount + i
+                            Html.div [
+                              prop.key ($"slot-{slotGlobalIndex}")
+                              prop.className "w-full sm:w-44 max-w-full"
+                              prop.children [
+                                Html.div [
+                                  prop.className "text-center text-[10px] uppercase tracking-wide text-green-900 mb-1 opacity-60"
+                                  prop.text ($"Pos {slotGlobalIndex + 1}")
+                                ]
+                                fieldSlot slotGlobalIndex row[i] dispatch
+                              ]
+                            ]
                         ]
                       ]
-                    )
-                  )  
+                  ]
                 ]
               ]
             ]
