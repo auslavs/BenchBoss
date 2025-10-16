@@ -9,16 +9,11 @@ module Component =
   open Browser.Dom
   [<ReactComponent>]
   let Render () =
-    let state, dispatch = React.useElmish(State.init, State.updateWithSave)
+    let initialPage = Routing.currentPageFromUrl()
+    let state, dispatch = React.useElmish(State.init initialPage, State.updateWithSave)
 
     // Centralized routing via Routing module
     let currentPageFromUrl () = Routing.currentPageFromUrl()
-
-    // On initial mount, align state with URL
-    React.useEffectOnce(fun () ->
-      let initial = currentPageFromUrl()
-      if initial <> state.CurrentPage then dispatch (NavigateToPage initial)
-      ())
 
     // Listen to future url changes (back/forward) via popstate
     React.useEffectOnce(fun () ->

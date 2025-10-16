@@ -4,6 +4,9 @@ module Routing =
   open Feliz.Router
   open BenchBossApp.Components.BenchBoss.Types
 
+  [<Literal>]
+  let BaseSegment = "benchboss"
+
   // Don't include base segment in the routes - GitHub Pages handles that
   let private pageSegments = function
     | HomePage -> [ ]  // Just #/
@@ -17,16 +20,17 @@ module Routing =
 
   let parseUrl (segments:string list) : Page =
     // Clean up segments
-    let cleaned = segments |> List.filter (fun s -> s <> "") |> List.map (_.ToLower())
+    let cleaned = segments |> List.filter (fun s -> s <> "") |> List.map _.ToLower()
 
     match cleaned with
-    | [] -> HomePage
-    | [ "game" ] -> GamePage
-    | [ "manage-team" ] -> ManageTeamPage
-    | [ "game-setup" ] -> GameSetupPage
-    | [ "404" ] -> NotFoundPage
+    | [ BaseSegment ] -> HomePage
+    | [ BaseSegment; "game" ] -> GamePage
+    | [ BaseSegment; "manage-team" ] -> ManageTeamPage
+    | [ BaseSegment; "game-setup" ] -> GameSetupPage
+    | [ BaseSegment; "404" ] -> NotFoundPage
     | _ -> NotFoundPage
 
   let currentPageFromUrl () : Page =
+    Browser.Dom.console.log("Current URL segments:", Router.currentPath() |> List.toArray)
     let segments = Router.currentPath()
     parseUrl segments

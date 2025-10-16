@@ -32,10 +32,10 @@ module State =
       CurrentModal = NoModal
     }
 
-  let init () =
+  let init (initialPage: Page) =
     match Store.loadFromStorage validateState () with
-    | Some stored -> stored, Cmd.ofMsg Tick // kick a tick to normalize
-    | None -> empty(), Cmd.none
+    | Some stored -> { stored with CurrentPage = initialPage }, Cmd.ofMsg Tick // kick a tick to normalize
+    | None -> { empty() with CurrentPage = initialPage }, Cmd.none
 
   let private scheduleTickCmd : Cmd<Msg> =
     Cmd.OfAsync.perform (fun () -> async { do! Async.Sleep 1000 }) () (fun () -> Tick)
