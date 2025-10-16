@@ -17,6 +17,7 @@ module Component =
 
     // Listen to future url changes (back/forward) via popstate
     React.useEffectOnce(fun () ->
+      Browser.Dom.console.log("Setting up popstate listener")
       let handler = fun (_:obj) ->
         let p = currentPageFromUrl()
         if p <> state.CurrentPage then dispatch (NavigateToPage p)
@@ -24,11 +25,12 @@ module Component =
       { new System.IDisposable with member _.Dispose() = window.removeEventListener("popstate", handler) })
 
     // Push state.CurrentPage to URL when it changes
-    React.useEffect((fun () ->
-      let desired = Routing.href state.CurrentPage
-      let current = Router.currentPath() |> Router.format
-      if current <> desired then Router.navigatePath(desired)
-      ), [| box state.CurrentPage |])
+    // React.useEffect((fun () ->
+    //   Browser.Dom.console.log("Syncing URL to state.CurrentPage:", Page.toString state.CurrentPage)
+    //   let desired = Routing.href state.CurrentPage
+    //   let current = Router.currentPath() |> Router.format
+    //   if current <> desired then Router.navigatePath(desired)
+    //   ), [| box state.CurrentPage |])
 
     let startTimer = fun _ -> dispatch StartTimer
     let pauseTimer = fun _ -> dispatch PauseTimer

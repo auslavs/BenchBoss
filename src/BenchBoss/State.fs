@@ -33,6 +33,7 @@ module State =
     }
 
   let init (initialPage: Page) =
+    Browser.Dom.console.log("Initializing state with page:", Page.toString initialPage)
     match Store.loadFromStorage validateState () with
     | Some stored -> { stored with CurrentPage = initialPage }, Cmd.ofMsg Tick // kick a tick to normalize
     | None -> { empty() with CurrentPage = initialPage }, Cmd.none

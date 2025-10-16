@@ -29,6 +29,9 @@ module Routing =
     | [ BaseSegment; "game-setup" ] -> GameSetupPage
     | [ BaseSegment; "404" ] -> NotFoundPage
     | _ -> NotFoundPage
+    |> fun p ->
+      Browser.Dom.console.log("Parsed URL segments:", cleaned |> List.toArray, "->", Page.toString p)
+      p
 
   let currentPageFromUrl () : Page =
     Browser.Dom.console.log("Current URL segments:", Router.currentPath() |> List.toArray)

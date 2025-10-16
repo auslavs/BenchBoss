@@ -63,6 +63,15 @@ module Types =
     | GameSetupPage
     | NotFoundPage
 
+  [<RequireQualifiedAccess>]
+  module Page =
+    let toString = function
+      | HomePage -> "HomePage"
+      | GamePage -> "GamePage"
+      | ManageTeamPage -> "ManageTeamPage"
+      | GameSetupPage -> "GameSetupPage"
+      | NotFoundPage -> "NotFoundPage"
+
   type RunningTimerState =
     {| Half: Half; Elapsed: int; LastTick: DateTime |}
 
