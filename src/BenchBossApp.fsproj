@@ -17,6 +17,7 @@
     <Compile Include="BenchBoss\Logo.fs" />
     <Compile Include="BenchBoss\Navigation.fs" />
     <Compile Include="BenchBoss\Layout.fs" />
+    <Compile Include="BenchBoss\DragDropUtils.fs" />
     <Compile Include="BenchBoss\GamePage.fs" />
     <Compile Include="BenchBoss\ManageTeamPage.fs" />
     <Compile Include="BenchBoss\HomePage.fs" />

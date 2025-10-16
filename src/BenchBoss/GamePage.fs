@@ -3,8 +3,10 @@ namespace BenchBossApp.Components.BenchBoss
 open Feliz
 open Browser.Types
 open BenchBossApp.Components.BenchBoss.Types
+open BenchBossApp.Components.BenchBoss.DragDropUtils
 
 module GamePage =
+  // DragDropInit registers global drag/drop listeners once and cleans up on unmount.
 
   let private playerLabel (p:GamePlayer) (extra:string) =
     let nbsp = "\u00A0"
@@ -27,87 +29,34 @@ module GamePage =
     ]
 
   let private draggablePlayer (p:GamePlayer) =
-    Html.div [
-      prop.className "cursor-move w-full h-16 select-none p-2 bg-white rounded-lg border border-gray-200 hover:border-purple-300 shadow-sm"
-      prop.draggable true
-      prop.onDragStart (fun ev ->
-        let playerId = p.Id.ToString()
-        ev.dataTransfer.setData("text", playerId) |> ignore
-        ev.dataTransfer.effectAllowed <- "move"
-      )
-      prop.children [
-        playerLabel p ""
-      ]
-    ]
+    Html.div ([
+      prop.className "cursor-move w-full h-16 select-none touch-none p-2 bg-white rounded-lg border border-gray-200 hover:border-purple-300 shadow-sm"
+    ] @ (draggableProps (p.Id.ToString()) p.Name) @ [
+      prop.children [ playerLabel p "" ]
+    ])
 
   let private fieldSlot (slotIndex: int) (playerOpt: GamePlayer option) (dispatch: Msg -> unit) =
-    let onDrop (ev: DragEvent) =
-      ev.preventDefault()
-      let playerIdStr = ev.dataTransfer.getData "text"
-      match System.Guid.TryParse(playerIdStr) with
-      | true, playerId -> dispatch (DropOnField(slotIndex, playerId))
-      | false, _ -> ()
-
-    let onDragOver (ev: DragEvent) =
-      ev.preventDefault()
-      ev.dataTransfer.dropEffect <- "move"
-
-    let onDragEnter (ev: DragEvent) =
-      ev.preventDefault()
-
-    let onDragLeave (ev: DragEvent) =
-      ev.preventDefault()
-
-    Html.div [
+    Html.div ([
       prop.className [
-        "w-full h-16 rounded-lg flex items-center justify-center bg-green-50 hover:bg-green-100 transition-colors"
+        "w-full h-16 rounded-lg flex items-center justify-center bg-green-50 hover:bg-green-100 transition-colors touch-none"
         match playerOpt with
         | Some _ -> "cursor-move"
         | None -> "cursor-pointer border-2 border-gray-300 border-dashed"
       ]
-      prop.onDrop onDrop
-      prop.onDragOver onDragOver
-      prop.onDragEnter onDragEnter
-      prop.onDragLeave onDragLeave
+    ] @ fieldSlotProps slotIndex @ [
       prop.children [
         match playerOpt with
-        | Some player ->
-            draggablePlayer player
-        | None ->
-            Html.span [
-              prop.className "text-gray-400 text-sm pointer-events-none"
-              prop.text "Drop player here"
-            ]
+        | Some player -> draggablePlayer player
+        | None -> Html.span [ prop.className "text-gray-400 text-sm pointer-events-none"; prop.text "Drop player here" ]
       ]
-    ]
+    ])
 
   [<ReactComponent>]
   let private BenchArea (allPlayers: GamePlayer list) (dispatch: Msg -> unit) =
 
     let playerIsHovering, setPlayerIsHovering = React.useState false
 
-    let onDrop (ev: DragEvent) =
-      Browser.Dom.console.log("Bench drop event", ev)
-      ev.preventDefault()
-      let playerIdStr = ev.dataTransfer.getData "text"
-      match System.Guid.TryParse playerIdStr with
-      | true, playerId -> dispatch (DropOnBench playerId)
-      | false, _ -> ()
-
-    let onDragEnter (ev: DragEvent) =
-      Browser.Dom.console.log("Bench drag enter event", ev)
-      setPlayerIsHovering true
-      ev.preventDefault()
-
-    let onDragLeave (ev: DragEvent) =
-      Browser.Dom.console.log("Bench drag leave event", ev)
-      setPlayerIsHovering false
-      ev.preventDefault()
-
-    let onDragOver (ev: DragEvent) =
-      Browser.Dom.console.log("Bench drag over event", ev)
-      ev.preventDefault()
-      ev.dataTransfer.dropEffect <- "move"
+    // Hover styling will be managed by pointer events implicitly when preview overlaps; simple state retained for future enhancement
 
     let benchPlayerObjs = 
       allPlayers 
@@ -119,15 +68,12 @@ module GamePage =
         prop.className "text-lg font-semibold mb-3 text-yellow-800"
         prop.text "Bench"
       ]
-      Html.div [
+      Html.div ([
         prop.className [
-          "bg-yellow-50 border-2 border-yellow-300 rounded-lg p-4 min-h-32"
+          "bg-yellow-50 border-2 border-yellow-300 rounded-lg p-4 min-h-32 touch-none"
           if playerIsHovering then "border-yellow-500 bg-yellow-100" else "border-dashed"
         ]
-        prop.onDrop onDrop
-        prop.onDragEnter onDragEnter
-        prop.onDragLeave onDragLeave
-        prop.onDragOver onDragOver
+      ] @ benchProps() @ [
         prop.children [
           // Remove the heading from here
           Html.div [
@@ -143,7 +89,7 @@ module GamePage =
               prop.text "Drag players here to put them on the bench"
             ]
         ]
-      ]
+      ])
     ]
 
   let private fieldMarkings =
@@ -159,7 +105,25 @@ module GamePage =
       ]
     ]
 
-  let render (state: State) (dispatch: Msg -> unit) =
+  [<ReactComponent>]
+  let DragDropInit (state: State) (dispatch: Msg -> unit) =
+    React.useEffect((fun () ->
+      let dispose = DragDropUtils.registerGlobal
+                      (fun slotIdx playerIdStr ->
+                        match System.Guid.TryParse playerIdStr with
+                        | true, gid -> dispatch (DropOnField(slotIdx, gid))
+                        | _ -> () )
+                      (fun playerIdStr ->
+                        match System.Guid.TryParse playerIdStr with
+                        | true, gid -> dispatch (DropOnBench gid)
+                        | _ -> () )
+      Some { new System.IDisposable with member _.Dispose() = dispose() }
+    ), [||])
+    Html.none
+
+  // Convert previous render function into a React component so we can safely place components/hook usage.
+  [<ReactComponent>]
+  let RenderGamePage (state: State) (dispatch: Msg -> unit) =
     let onFieldPlayers = 
       state.Game.Players 
       |> List.filter (fun p -> p.InGameStatus = OnField)
@@ -170,10 +134,11 @@ module GamePage =
       let playerArray = Array.create targetSlots None
       onFieldPlayers |> List.iteri (fun i p -> if i < targetSlots then playerArray[i] <- Some p)
       playerArray
-
     Html.div [
       prop.className "flex-1 p-4 bg-gradient-to-b from-green-50 to-blue-50"
       prop.children [
+        // inject global drag-drop initializer (no visible output)
+        DragDropInit state dispatch
         // Soccer Field
         Html.div [
           prop.className "max-w-4xl mx-auto"
@@ -204,9 +169,9 @@ module GamePage =
                 Html.div [
                   prop.className "flex flex-col gap-6 justify-center items-stretch min-h-64 z-10 relative"
                   prop.children [
-                    for (rowIdx, row) in rows |> List.indexed do
+                    for rowIdx, row in rows |> List.indexed do
                       Html.div [
-                        prop.key ($"row-{rowIdx}")
+                        prop.key $"row-{rowIdx}"
                         prop.className "flex flex-col items-stretch gap-4 sm:flex-row sm:justify-center sm:gap-6"
                         prop.children [
                           for i in 0 .. row.Length - 1 do
@@ -231,13 +196,11 @@ module GamePage =
             ]
 
             // Bench section
-            Html.div [
-              prop.className "mt-8"
-              prop.children [
-                BenchArea state.Game.Players dispatch
-              ]
-            ]
+            Html.div [ prop.className "mt-8"; prop.children [ BenchArea state.Game.Players dispatch ] ]
           ]
         ]
       ]
     ]
+
+  // Provide original render function name expected elsewhere
+  let render (state: State) (dispatch: Msg -> unit) = RenderGamePage state dispatch

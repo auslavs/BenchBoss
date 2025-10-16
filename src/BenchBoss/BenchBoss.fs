@@ -50,7 +50,7 @@ module Component =
         Layout.render dispatch state
         // Page content based on current page
         (match state.CurrentPage with
-         | GamePage -> GamePage.render state dispatch
+         | GamePage -> GamePage.RenderGamePage state dispatch
          | ManageTeamPage -> ManageTeamPage.render state dispatch
          | GameSetupPage -> BenchBossApp.Components.BenchBoss.GameSetupPage.View state dispatch
          | HomePage -> BenchBossApp.Components.BenchBoss.HomePage.View state dispatch

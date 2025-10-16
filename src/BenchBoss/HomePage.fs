@@ -84,17 +84,6 @@ module HomePage =
                         prop.onClick (fun _ -> dispatch (NavigateToPage GamePage))
                         prop.title "Go to the active game"
                       ]
-                    Html.button [
-                      prop.className "w-full sm:w-auto px-6 py-3 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-lg font-medium"
-                      prop.text (if hasActiveGame then "Start New Game" else "Start New Game")
-                      prop.onClick (fun _ -> dispatch (NavigateToPage GameSetupPage))
-                      prop.title "Create a new game (will replace current if one is active)"
-                    ]
-                    Html.button [
-                      prop.className "w-full sm:w-auto px-6 py-3 bg-white hover:bg-gray-50 text-gray-700 border rounded-lg font-medium"
-                      prop.text "Manage Team"
-                      prop.onClick (fun _ -> dispatch (NavigateToPage ManageTeamPage))
-                    ]
                     if hasActiveGame then
                       Html.button [
                         prop.className "w-full sm:w-auto px-6 py-3 bg-red-50 text-red-700 border border-red-300 hover:bg-red-100 rounded-lg font-medium"
@@ -102,6 +91,18 @@ module HomePage =
                         prop.onClick (fun _ -> dispatch ResetGame)
                         prop.title "End the current game and reset scores and timers"
                       ]
+                    if not hasActiveGame then
+                      Html.button [
+                        prop.className "w-full sm:w-auto px-6 py-3 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-lg font-medium"
+                        prop.text (if hasActiveGame then "Start New Game" else "Start New Game")
+                        prop.onClick (fun _ -> dispatch (NavigateToPage GameSetupPage))
+                        prop.title "Create a new game (will replace current if one is active)"
+                      ]
+                    Html.button [
+                      prop.className "w-full sm:w-auto px-6 py-3 bg-white hover:bg-gray-50 text-gray-700 border rounded-lg font-medium"
+                      prop.text "Manage Team"
+                      prop.onClick (fun _ -> dispatch (NavigateToPage ManageTeamPage))
+                    ]
                   ]
                 ]
               ]
