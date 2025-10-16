@@ -18,19 +18,30 @@ module Navigation =
         prop.children [
           HeadlessUI.DisclosureButton {|
             As = None
+            Key = "mobile-menu-button"
             Href = None
             ClassName =
               "group relative inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-2 focus:-outline-offset-1 focus:outline-purple-600 dark:hover:bg-white/5 dark:hover:text-white dark:focus:outline-purple-500"
             Children = [
-              Html.span [ prop.className "absolute -inset-0.5" ]
-              Html.span [ prop.className "sr-only"; prop.text "Open main menu" ]
-              Heroicons.Bars3Icon [
-                "aria-hidden" ==> true
-                "className" ==> "block size-6 group-data-open:hidden"
+              Html.span [ prop.key "mm-backdrop"; prop.className "absolute -inset-0.5" ]
+              Html.span [ prop.key "mm-sr"; prop.className "sr-only"; prop.text "Open main menu" ]
+              Html.span [
+                prop.key "mm-bars"
+                prop.children [
+                  Heroicons.Bars3Icon [
+                    "aria-hidden" ==> true
+                    "className" ==> "block size-6 group-data-open:hidden"
+                  ]
+                ]
               ]
-              Heroicons.XMarkIcon [
-                "aria-hidden" ==> true
-                "className" ==> "hidden size-6 group-data-open:block"
+              Html.span [
+                prop.key "mm-x"
+                prop.children [
+                  Heroicons.XMarkIcon [
+                    "aria-hidden" ==> true
+                    "className" ==> "hidden size-6 group-data-open:block"
+                  ]
+                ]
               ]
             ]
             OnClick = None
@@ -40,7 +51,7 @@ module Navigation =
 
     let pageHref page = Routing.href page
 
-    let menuItem isCurrentPage (text: string) (page:Page) (onNavigate: unit -> unit) =
+    let menuItem key isCurrentPage (text: string) (page:Page) (onNavigate: unit -> unit) =
       let defaultClasses =
         "block border-l-4 border-transparent py-2 pr-4 pl-3 text-base font-medium text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-700 dark:text-gray-300 dark:hover:border-white/20 dark:hover:bg-white/5 dark:hover:text-white"
       let currentPageClasses =
@@ -48,6 +59,7 @@ module Navigation =
 
       HeadlessUI.DisclosureButton {|
         As = Some "a"
+        Key = key
         Href = Some (pageHref page)
         ClassName = if isCurrentPage then currentPageClasses else defaultClasses
         Children = [ Html.text text ]
@@ -56,6 +68,7 @@ module Navigation =
 
     let menuPanel (links: ReactElement list) =
       HeadlessUI.DisclosurePanel {|
+        Key = Some "mobile-menu-panel"
         ClassName = "sm:hidden"
         Children = [
           Html.div [
@@ -68,13 +81,14 @@ module Navigation =
   module private Desktop =
     let private pageHref page = Routing.href page
 
-    let navLink isCurrentPage (text: string) (onClick: unit -> unit) (page:Page) =
+    let navLink (key: string) (isCurrentPage: bool) (text: string) (onClick: unit -> unit) (page:Page) =
       let defaultClasses =
         "inline-flex items-center cursor-pointer border-b-2 border-transparent px-1 pt-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-300 dark:hover:border-white/20 dark:hover:text-white"
       let currentPageClasses =
         "inline-flex items-center cursor-pointer border-b-2 border-purple-600 px-1 pt-1 text-sm font-medium text-gray-900 dark:border-purple-500 dark:text-white"
 
       Html.a [
+        prop.key key
         prop.href (pageHref page)
         prop.className (if isCurrentPage then currentPageClasses else defaultClasses)
         prop.text text
@@ -106,6 +120,7 @@ module Navigation =
       ClassName = "relative bg-white shadow-sm dark:bg-gray-800/50 dark:shadow-none dark:after:pointer-events-none dark:after:absolute dark:after:inset-x-0 dark:after:bottom-0 dark:after:h-px dark:after:bg-white/10"
       Children = [
         Html.div [
+          prop.key "desktop-menu"
           prop.className "mx-auto max-w-7xl px-4 sm:px-6 lg:px-8"
           prop.children [
             Html.div [
@@ -113,9 +128,9 @@ module Navigation =
               prop.children [
                 // Left side - Logo and Nav Links
                 Desktop.leftSideNav navigate [
-                  Desktop.navLink (currentPage = HomePage) "Home" (fun () -> navigate HomePage) HomePage
-                  Desktop.navLink (currentPage = ManageTeamPage) "Manage Team" (fun () -> navigate ManageTeamPage) ManageTeamPage
-                  Desktop.navLink (currentPage = GamePage) "Current Game" (fun () -> navigate GamePage) GamePage
+                  Desktop.navLink "nav-home" (currentPage = HomePage) "Home" (fun () -> navigate HomePage) HomePage
+                  Desktop.navLink "nav-manage" (currentPage = ManageTeamPage) "Manage Team" (fun () -> navigate ManageTeamPage) ManageTeamPage
+                  Desktop.navLink "nav-game" (currentPage = GamePage) "Current Game" (fun () -> navigate GamePage) GamePage
                 ]
                 // Html.div [
                 //   prop.className "flex"
@@ -233,9 +248,9 @@ module Navigation =
 
         // Mobile menu panel
         Mobile.menuPanel [
-          Mobile.menuItem (currentPage = HomePage) "Home" HomePage (fun () -> navigate HomePage)
-          Mobile.menuItem (currentPage = ManageTeamPage) "Manage Team" ManageTeamPage (fun () -> navigate ManageTeamPage)
-          Mobile.menuItem (currentPage = GamePage) "Current Game" GamePage (fun () -> navigate GamePage)
+          Mobile.menuItem "mobile-home" (currentPage = HomePage) "Home" HomePage (fun () -> navigate HomePage)
+          Mobile.menuItem "mobile-manage" (currentPage = ManageTeamPage) "Manage Team" ManageTeamPage (fun () -> navigate ManageTeamPage)
+          Mobile.menuItem "mobile-game" (currentPage = GamePage) "Current Game" GamePage (fun () -> navigate GamePage)
         ]
 
         // HeadlessUI.DisclosurePanel {|

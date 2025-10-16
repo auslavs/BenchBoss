@@ -16,6 +16,7 @@ module HeadlessUI =
     
     type DisclosureButtonProps = {|
         As: string option
+        Key: string
         Href: string option
         ClassName: string
         Children: ReactElement list
@@ -25,6 +26,7 @@ module HeadlessUI =
     type DisclosurePanelProps = {|
         ClassName: string
         Children: ReactElement list
+        Key: string option
     |}
     
     type MenuProps = {|
@@ -80,10 +82,12 @@ module HeadlessUI =
     
     [<ReactComponent>]
     let DisclosurePanel (props: DisclosurePanelProps) =
-        Feliz.Interop.reactApi.createElement(headlessUI?DisclosurePanel, createObj [
-            "className" ==> props.ClassName
-            "children" ==> props.Children
-        ])
+        let pairs = ["className" ==> props.ClassName; "children" ==> props.Children]
+        let pairs =
+            match props.Key with
+            | Some k -> ("key" ==> k)::pairs
+            | None -> pairs
+        Feliz.Interop.reactApi.createElement(headlessUI?DisclosurePanel, createObj pairs)
     
     [<ReactComponent>]
     let Menu (props: MenuProps) =

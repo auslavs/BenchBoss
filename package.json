@@ -3,8 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "dotnet tool restore && dotnet fable watch src --run vite",
-    "build": "dotnet tool restore && dotnet fable src --run vite build",
+    "start": "dotnet tool restore && dotnet fable watch src -s --run vite",
+    "build": "dotnet tool restore && dotnet fable src -s --run vite build",
     "clean": "dotnet fable clean src --yes"
   },
   "dependencies": {
