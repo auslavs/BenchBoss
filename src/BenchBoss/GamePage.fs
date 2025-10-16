@@ -28,12 +28,39 @@ module GamePage =
       ]
     ]
 
-  let private draggablePlayer (p:GamePlayer) =
+
+  [<ReactComponent>]
+  let private draggablePlayer (p:GamePlayer) (onDoubleClick: (unit -> unit) option) =
+    let lastTapTime, setLastTapTime = React.useState<System.DateTime option>(None)
+    
+    let handleTap () =
+      match onDoubleClick with
+      | None -> ()
+      | Some handler ->
+          let now = System.DateTime.Now
+          match lastTapTime with
+          | Some prevTime when (now - prevTime).TotalMilliseconds < 300.0 ->
+              // Double tap detected (within 300ms)
+              handler()
+              setLastTapTime None  // Reset after successful double-tap
+          | _ ->
+              // First tap or too slow
+              setLastTapTime (Some now)
+    
     Html.div ([
       prop.className "cursor-move w-full h-16 select-none touch-none p-2 bg-white rounded-lg border border-gray-200 hover:border-purple-300 shadow-sm"
     ] @ (draggableProps (p.Id.ToString()) p.Name) @ [
       prop.children [ playerLabel p "" ]
-    ])
+    ] @ (match onDoubleClick with
+         | Some _ -> [ 
+             prop.onDoubleClick (fun _ -> handleTap())
+             prop.onTouchEnd (fun e -> 
+               e.preventDefault()
+               handleTap()
+             )
+           ]
+         | None -> [])
+    )
 
   let private fieldSlot (slotIndex: int) (playerOpt: GamePlayer option) (dispatch: Msg -> unit) =
     Html.div ([
@@ -46,13 +73,13 @@ module GamePage =
     ] @ fieldSlotProps slotIndex @ [
       prop.children [
         match playerOpt with
-        | Some player -> draggablePlayer player
+        | Some player -> draggablePlayer player None
         | None -> Html.span [ prop.className "text-gray-400 text-sm pointer-events-none"; prop.text "Drop player here" ]
       ]
     ])
 
   [<ReactComponent>]
-  let private BenchArea (allPlayers: GamePlayer list) (dispatch: Msg -> unit) =
+  let private BenchArea (allPlayers: GamePlayer list) (fieldPlayerTarget: int) (dispatch: Msg -> unit) =
 
     let playerIsHovering, setPlayerIsHovering = React.useState false
 
@@ -62,6 +89,17 @@ module GamePage =
       allPlayers 
       |> List.filter (fun p -> p.InGameStatus = OnBench)
       |> List.sortByDescending (fun p -> p.BenchedSeconds)
+
+    let onFieldCount = 
+      allPlayers 
+      |> List.filter (fun p -> p.InGameStatus = OnField)
+      |> List.length
+
+    let handleDoubleClick playerId =
+      // Only move to field if there's space available
+      if onFieldCount < fieldPlayerTarget then
+        // Find first available slot (onFieldCount is the first empty slot index)
+        dispatch (DropOnField(onFieldCount, playerId))
 
     React.fragment [
       Html.h3 [
@@ -80,7 +118,7 @@ module GamePage =
             prop.className "space-y-2"
             prop.children [
               for player in benchPlayerObjs do
-                draggablePlayer player
+                draggablePlayer player (Some (fun () -> handleDoubleClick player.Id))
             ]
           ]
           if benchPlayerObjs.IsEmpty then
@@ -196,7 +234,7 @@ module GamePage =
             ]
 
             // Bench section
-            Html.div [ prop.className "mt-8"; prop.children [ BenchArea state.Game.Players dispatch ] ]
+            Html.div [ prop.className "mt-8"; prop.children [ BenchArea state.Game.Players state.FieldPlayerTarget dispatch ] ]
           ]
         ]
       ]

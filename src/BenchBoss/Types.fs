@@ -160,7 +160,7 @@ module Types =
     | TogglePlayerGameAvailability of PlayerId
     | ResetGame
     | StartNewGame of starting: PlayerId list * bench: PlayerId list
-  | SetFieldPlayerTarget of int
+    | SetFieldPlayerTarget of int
 
   module Constants =
     [<Literal>]
