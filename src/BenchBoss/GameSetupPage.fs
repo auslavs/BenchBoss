@@ -175,27 +175,27 @@ module GameSetupPage =
       (emptyMessage: string)
       =
       Html.div [
-        prop.className "border border-purple-100 rounded-2xl bg-gradient-to-b from-purple-50 to-white p-5 space-y-4"
+        prop.className "border border-purple-100 rounded-2xl bg-gradient-to-b from-purple-50 to-white p-4 sm:p-5 space-y-3.5"
         prop.children [
           Html.div [
-            prop.className "flex items-start justify-between gap-4"
+            prop.className "flex items-start justify-between gap-3"
             prop.children [
               Html.div [
-                prop.className "space-y-1"
+                prop.className "space-y-0.5"
                 prop.children [
-                  Html.h3 [ prop.className "font-semibold text-purple-900"; prop.text title ]
-                  Html.p [ prop.className "text-sm text-purple-500"; prop.text description ]
+                  Html.h3 [ prop.className "text-sm font-semibold text-purple-900"; prop.text title ]
+                  Html.p [ prop.className "text-xs text-purple-500"; prop.text description ]
                 ]
               ]
               Html.div [
-                prop.className "px-3 py-1 rounded-full bg-white border border-purple-200 text-sm font-medium text-purple-700"
+                prop.className "px-3 py-1 rounded-full bg-white border border-purple-200 text-xs font-semibold text-purple-700"
                 prop.text (string count)
               ]
             ]
           ]
           if List.isEmpty items then
             Html.div [
-              prop.className "text-sm text-purple-500 bg-white border border-dashed border-purple-200 rounded-xl p-4 text-center"
+              prop.className "text-xs text-purple-500 bg-white border border-dashed border-purple-200 rounded-xl p-3.5 text-center"
               prop.text emptyMessage
             ]
           else
@@ -207,18 +207,18 @@ module GameSetupPage =
       ]
 
     Html.div [
-      prop.className "flex-1 p-6 bg-gradient-to-b from-purple-50 to-indigo-50"
+      prop.className "flex-1 p-4 sm:p-6 bg-gradient-to-b from-purple-50 to-indigo-50"
       prop.children [
         Html.div [
-          prop.className "max-w-4xl mx-auto space-y-8"
+          prop.className "max-w-3xl mx-auto space-y-6"
           prop.children [
             Html.div [
-              prop.className "flex flex-col gap-4 md:flex-row md:items-center md:justify-between"
+              prop.className "flex flex-col gap-3 md:flex-row md:items-center md:justify-between"
               prop.children [
                 Html.div [
-                  prop.className "space-y-2"
+                  prop.className "space-y-1.5"
                   prop.children [
-                    Html.h1 [ prop.className "text-2xl font-bold text-purple-900"; prop.text "Game Setup" ]
+                    Html.h1 [ prop.className "text-xl font-semibold text-purple-900"; prop.text "Game Setup" ]
                     Html.p [
                       prop.className "text-sm text-purple-500"
                       prop.text (
@@ -240,41 +240,41 @@ module GameSetupPage =
             match currentStep with
             | SelectPlayers ->
               Html.div [
-                prop.className "bg-white rounded-2xl shadow-xl p-8 space-y-8"
+                prop.className "bg-white rounded-2xl shadow-lg p-6 sm:p-7 space-y-6"
                 prop.children [
                   Html.div [
-                    prop.className "flex items-center justify-between"
+                    prop.className "flex items-start justify-between"
                     prop.children [
                       Html.div [
-                        prop.className "space-y-1"
+                        prop.className "space-y-0.5"
                         prop.children [
-                          Html.h2 [ prop.className "text-lg font-semibold text-purple-900"; prop.text "Select Players" ]
+                          Html.h2 [ prop.className "text-base font-semibold text-purple-900"; prop.text "Select Players" ]
                           Html.p [ prop.className "text-sm text-purple-500"; prop.text "Choose which players are attending this game." ]
                         ]
                       ]
                       Html.div [
-                        prop.className "px-4 py-2 rounded-full bg-purple-50 text-purple-600 font-medium"
+                        prop.className "px-3.5 py-1.5 rounded-full bg-purple-50 text-sm text-purple-600 font-medium"
                         prop.text $"{selectedPlayers.Count} Players Selected"
                       ]
                     ]
                   ]
                   Html.div [
-                    prop.className "grid gap-6 lg:grid-cols-2"
+                    prop.className "grid gap-5 lg:grid-cols-2"
                     prop.children [
                       rosterListSection
                         "Playing Today"
                         "Remove players if they won't be at the game."
                         selectedRoster.Length
-                        "space-y-3"
+                        "space-y-2.5"
                         selectedRoster
                         (fun player ->
                           Html.div [
                             prop.key (string player.Id)
-                            prop.className "flex items-center justify-between bg-white border border-purple-100 rounded-xl px-4 py-3 shadow-sm"
+                            prop.className "flex items-center justify-between bg-white border border-purple-100 rounded-xl px-4 py-2.5 shadow-sm"
                             prop.children [
-                              Html.span [ prop.className "font-medium text-purple-900"; prop.text player.Name ]
+                              Html.span [ prop.className "text-sm font-medium text-purple-900"; prop.text player.Name ]
                               Html.button [
-                                prop.className "text-sm text-red-500 hover:text-red-600"
+                                prop.className "text-xs font-medium text-red-500 hover:text-red-600"
                                 prop.text "Remove"
                                 prop.onClick (fun _ -> toggleSelect player.Id)
                               ]
@@ -285,16 +285,16 @@ module GameSetupPage =
                         "Roster"
                         "Add available players to today's game."
                         availableRoster.Length
-                        "space-y-3"
+                        "space-y-2.5"
                         availableRoster
                         (fun player ->
                           Html.div [
                             prop.key (string player.Id)
-                            prop.className "flex items-center justify-between bg-white border border-purple-100 rounded-xl px-4 py-3 shadow-sm"
+                            prop.className "flex items-center justify-between bg-white border border-purple-100 rounded-xl px-4 py-2.5 shadow-sm"
                             prop.children [
-                              Html.span [ prop.className "font-medium text-purple-900"; prop.text player.Name ]
+                              Html.span [ prop.className "text-sm font-medium text-purple-900"; prop.text player.Name ]
                               Html.button [
-                                prop.className "text-sm text-purple-600 hover:text-purple-700"
+                                prop.className "text-xs font-medium text-purple-600 hover:text-purple-700"
                                 prop.text "Add"
                                 prop.onClick (fun _ -> toggleSelect player.Id)
                               ]
@@ -304,14 +304,14 @@ module GameSetupPage =
                     ]
                   ]
                   Html.div [
-                    prop.className "flex flex-col gap-3 sm:flex-row sm:justify-end"
+                    prop.className "flex flex-col gap-2.5 sm:flex-row sm:justify-end"
                     prop.children [
                       Html.button [
                         prop.className (
                           if canAdvance then
-                            "inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-purple-600 text-white font-medium shadow hover:bg-purple-700 transition-colors"
+                            "inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-purple-600 text-white text-sm font-medium shadow hover:bg-purple-700 transition-colors"
                           else
-                            "inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gray-300 text-gray-500 font-medium cursor-not-allowed"
+                            "inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gray-300 text-gray-500 text-sm font-medium cursor-not-allowed"
                         )
                         prop.disabled (not canAdvance)
                         prop.text "Continue to Lineup"
@@ -325,37 +325,37 @@ module GameSetupPage =
               ]
             | ChooseLineup ->
               Html.div [
-                prop.className "bg-white rounded-2xl shadow-xl p-8 space-y-8"
+                prop.className "bg-white rounded-2xl shadow-lg p-6 sm:p-7 space-y-6"
                 prop.children [
                   Html.div [
-                    prop.className "space-y-2"
+                    prop.className "space-y-1.5"
                     prop.children [
-                      Html.h2 [ prop.className "text-lg font-semibold text-purple-900"; prop.text "Organize Lineup" ]
+                      Html.h2 [ prop.className "text-base font-semibold text-purple-900"; prop.text "Organize Lineup" ]
                       Html.p [ prop.className "text-sm text-purple-500"; prop.text "Select starters and confirm who begins on the bench." ]
                     ]
                   ]
                   Html.div [
-                    prop.className "flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+                    prop.className "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
                     prop.children [
                       Html.div [
-                        prop.className "flex items-center gap-3"
+                        prop.className "flex items-center gap-2.5"
                         prop.children [
                           Html.div [
-                            prop.className "px-4 py-2 rounded-xl bg-purple-50 text-purple-600 font-medium"
+                            prop.className "px-3.5 py-1.5 rounded-xl bg-purple-50 text-sm text-purple-600 font-medium"
                             prop.text $"{selectedPlayers.Count} Playing"
                           ]
                           Html.div [
-                            prop.className "px-4 py-2 rounded-xl bg-green-50 text-green-600 font-medium"
+                            prop.className "px-3.5 py-1.5 rounded-xl bg-green-50 text-sm text-green-600 font-medium"
                             prop.text $"{starters.Count} Starters"
                           ]
                         ]
                       ]
                       Html.div [
-                        prop.className "flex items-center gap-3"
+                        prop.className "flex items-center gap-2.5"
                         prop.children [
-                          Html.label [ prop.className "text-sm font-medium text-purple-700"; prop.text "Players on Field" ]
+                          Html.label [ prop.className "text-xs font-semibold text-purple-700"; prop.text "Players on Field" ]
                           Html.select [
-                            prop.className "border border-purple-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-400"
+                            prop.className "border border-purple-200 rounded-lg px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-400"
                             prop.value p.FieldPlayerTarget
                             prop.onChange (fun (value: string) ->
                               match System.Int32.TryParse value with
@@ -368,28 +368,28 @@ module GameSetupPage =
                     ]
                   ]
                   Html.div [
-                    prop.className "grid gap-6 lg:grid-cols-2"
+                    prop.className "grid gap-5 lg:grid-cols-2"
                     prop.children [
                       rosterListSection
                         "Starting Lineup"
                         "Players who will begin on the field."
                         starterPlayers.Length
-                        "space-y-3"
+                        "space-y-2.5"
                         starterPlayers
                         (fun player ->
                           Html.div [
                             prop.key (string player.Id)
-                            prop.className "flex items-center justify-between bg-purple-50 border border-purple-100 rounded-xl px-4 py-3 shadow-sm"
+                            prop.className "flex items-center justify-between bg-purple-50 border border-purple-100 rounded-xl px-4 py-2.5 shadow-sm"
                             prop.children [
                               Html.div [
-                                prop.className "flex items-center gap-3"
+                                prop.className "flex items-center gap-2.5"
                                 prop.children [
                                   Html.input [ prop.type' "checkbox"; prop.isChecked true; prop.disabled true ]
-                                  Html.span [ prop.className "font-medium text-purple-900"; prop.text player.Name ]
+                                  Html.span [ prop.className "text-sm font-medium text-purple-900"; prop.text player.Name ]
                                 ]
                               ]
                               Html.button [
-                                prop.className "text-sm text-purple-600 hover:text-purple-700"
+                                prop.className "text-xs font-medium text-purple-600 hover:text-purple-700"
                                 prop.text "Move to Bench"
                                 prop.onClick (fun _ -> toggleStarter player.Id)
                               ]
@@ -400,21 +400,21 @@ module GameSetupPage =
                         "On Bench"
                         "Select players to promote to the starting lineup."
                         benchPlayers.Length
-                        "space-y-3"
+                        "space-y-2.5"
                         benchPlayers
                         (fun player ->
                           let disabled = starters.Count >= maxStarters
                           Html.div [
                             prop.key (string player.Id)
-                            prop.className "flex items-center justify-between bg-white border border-purple-100 rounded-xl px-4 py-3 shadow-sm"
+                            prop.className "flex items-center justify-between bg-white border border-purple-100 rounded-xl px-4 py-2.5 shadow-sm"
                             prop.children [
-                              Html.span [ prop.className "font-medium text-purple-900"; prop.text player.Name ]
+                              Html.span [ prop.className "text-sm font-medium text-purple-900"; prop.text player.Name ]
                               Html.button [
                                 prop.className (
                                   if disabled then
-                                    "text-sm text-gray-400 cursor-not-allowed"
+                                    "text-xs font-medium text-gray-400 cursor-not-allowed"
                                   else
-                                    "text-sm text-purple-600 hover:text-purple-700"
+                                    "text-xs font-medium text-purple-600 hover:text-purple-700"
                                 )
                                 prop.text (if disabled then $"Max {maxStarters} starters" else "Set as Starter")
                                 prop.disabled disabled
@@ -426,19 +426,19 @@ module GameSetupPage =
                     ]
                   ]
                   Html.div [
-                    prop.className "flex flex-col gap-3 sm:flex-row sm:justify-between"
+                    prop.className "flex flex-col gap-2.5 sm:flex-row sm:justify-between"
                     prop.children [
                       Html.button [
-                        prop.className "inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-purple-200 text-purple-700 font-medium hover:bg-purple-50"
+                        prop.className "inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border border-purple-200 text-sm text-purple-700 font-medium hover:bg-purple-50"
                         prop.text "Back to Selection"
                         prop.onClick (fun _ -> setupDispatch BackToSelection)
                       ]
                       Html.button [
                         prop.className (
                           if canStart then
-                            "inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-purple-600 text-white font-medium shadow hover:bg-purple-700 transition-colors"
+                            "inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-purple-600 text-white text-sm font-medium shadow hover:bg-purple-700 transition-colors"
                           else
-                            "inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gray-300 text-gray-500 font-medium cursor-not-allowed"
+                            "inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gray-300 text-gray-500 text-sm font-medium cursor-not-allowed"
                         )
                         prop.disabled (not canStart)
                         prop.text "Start Game"
