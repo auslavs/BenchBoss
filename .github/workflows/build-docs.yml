@@ -63,6 +63,7 @@ jobs:
             exit 1
           fi
 
+          original_sha="$(git rev-parse HEAD)"
           tmp_dir="$(mktemp -d)"
           rsync -a docs/ "${tmp_dir}/"
 
@@ -87,7 +88,7 @@ jobs:
           fi
 
           rm -rf "${tmp_dir}"
-          git checkout -
+          git checkout --detach "${original_sha}"
 
       - name: Commit docs preview to publish branch
         if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
@@ -98,6 +99,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
 
+          original_sha="$(git rev-parse HEAD)"
           tmp_dir="$(mktemp -d)"
           rsync -a "docs/pr/${SAFE_BRANCH}/" "${tmp_dir}/"
 
@@ -121,7 +123,7 @@ jobs:
           fi
 
           rm -rf "${tmp_dir}"
-          git checkout -
+          git checkout --detach "${original_sha}"
 
       - name: Compute preview URL
         if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
