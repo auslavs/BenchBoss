@@ -51,14 +51,45 @@ jobs:
         run: |
           npm run build
 
-      - name: Commit docs build
+      - name: Publish docs for main
         if: github.event_name == 'push'
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: 'chore: update docs build'
-          file_pattern: docs
+        run: |
+          set -eo pipefail
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
 
-      - name: Commit docs preview to main
+          if [ ! -d docs ]; then
+            echo "Docs output not found" >&2
+            exit 1
+          fi
+
+          tmp_dir="$(mktemp -d)"
+          rsync -a docs/ "${tmp_dir}/"
+
+          git fetch origin publish || true
+          if git ls-remote --exit-code origin publish >/dev/null 2>&1; then
+            git checkout publish
+            git pull --ff-only origin publish
+          else
+            git checkout -B publish origin/main
+          fi
+
+          rm -rf docs
+          mkdir -p docs
+          rsync -a --delete "${tmp_dir}/" docs/
+
+          git add docs
+          if git diff --staged --quiet; then
+            echo "No docs changes to publish."
+          else
+            git commit -m "chore: publish docs update"
+            git push origin HEAD:publish
+          fi
+
+          rm -rf "${tmp_dir}"
+          git checkout -
+
+      - name: Commit docs preview to publish branch
         if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
         env:
           SAFE_BRANCH: ${{ env.SAFE_BRANCH }}
@@ -70,9 +101,13 @@ jobs:
           tmp_dir="$(mktemp -d)"
           rsync -a "docs/pr/${SAFE_BRANCH}/" "${tmp_dir}/"
 
-          git fetch origin main
-          git checkout main
-          git pull --ff-only origin main
+          git fetch origin publish || true
+          if git ls-remote --exit-code origin publish >/dev/null 2>&1; then
+            git checkout publish
+            git pull --ff-only origin publish
+          else
+            git checkout -B publish origin/main
+          fi
 
           mkdir -p "docs/pr/${SAFE_BRANCH}"
           rsync -a --delete "${tmp_dir}/" "docs/pr/${SAFE_BRANCH}/"
@@ -82,7 +117,7 @@ jobs:
             echo "No preview changes to commit."
           else
             git commit -m "chore: update docs preview for ${SAFE_BRANCH}"
-            git push origin HEAD:main
+            git push origin HEAD:publish
           fi
 
           rm -rf "${tmp_dir}"
