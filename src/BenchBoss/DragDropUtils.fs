@@ -10,7 +10,7 @@ module DragDropUtils =
   let mutable private currentDrag : DragContext option = None
 
   [<Literal>]
-  let private dragStartDelayMs = 120.
+  let private dragStartDelayMs = 120
 
   type PendingDrag =
     { TimerId: float
@@ -51,8 +51,8 @@ module DragDropUtils =
         | Some touchId ->
             let touches = ev.touches
             let mutable found = None
-            for i in 0 .. int touches.length - 1 do
-              let touch = touches.item(float i)
+            for i in 0 .. int touches.Length - 1 do
+              let touch = touches[i]
               if not (isNull touch) then
                 let identifier: float = touch?identifier
                 if identifier = touchId then
@@ -85,7 +85,7 @@ module DragDropUtils =
       preview.className <- "px-3 py-2 rounded bg-purple-600 text-white text-sm shadow-lg select-none"
       // Preview should only show player name, not timing stats
       preview.textContent <- playerName
-      document.body.appendChild(preview) |> ignore
+      document.body.appendChild preview |> ignore
       currentDrag <- Some { ItemId = itemId; PreviewEl = Some preview }
       // Disable body scroll while dragging (mobile)
       document.body?style?overscrollBehavior <- "contain"
@@ -127,8 +127,8 @@ module DragDropUtils =
 
   let private scheduleTouchDrag (itemId: string) (playerName: string) (origin: HTMLElement) (ev: TouchEvent) =
     clearPendingDrag ()
-    if ev.touches.length > 0. then
-      let touch = ev.touches.item(0.)
+    if ev.touches.Length > 0 then
+      let touch = ev.touches[0]
       if not (isNull touch) then
         let clientX: float = touch?clientX
         let clientY: float = touch?clientY
