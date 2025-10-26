@@ -11,43 +11,53 @@ module Layout =
         // Global navigation bar
         BenchBossApp.Components.Navigation.NavBar(NavigateToPage >> dispatch, state.CurrentPage)
 
-        Html.div [
-          prop.className "flex bg-purple-700 px-4 py-3 w-full text-white items-center"
-          prop.children [
-            // Left spacer (could hold future button)
-            Html.div [ prop.className "w-10" ]
+        // Hide scoreboard on Home / Manage Team when no active game (no players).
+        let hasActiveGame = not (state.Game.Players |> List.isEmpty)
+        let showScoreboard =
+          match state.CurrentPage with
+          | Page.HomePage | Page.ManageTeamPage -> hasActiveGame
+          | _ -> true
 
-            // Center column with score + timer
-            Html.div [
-              prop.className "flex-1 flex flex-col items-center gap-2"
-              prop.children [
-                Html.div [
-                  prop.className "bg-purple-600 px-6 py-2 rounded-lg flex items-center gap-4 text-3xl font-bold"
-                  prop.children [
-                    Html.button [
-                      prop.className "hover:bg-purple-700 px-4 py-1 rounded-lg transition-colors"
-                      prop.text (string state.OurScore)
-                      prop.onClick (fun _ -> dispatch (ShowModal OurTeamScoreModal))
-                      prop.title "Click to add score for our team"
-                    ]
-                    Html.span [ prop.className "opacity-80"; prop.text "-" ]
-                    Html.button [
-                      prop.className "hover:bg-purple-700 px-4 py-1 rounded-lg transition-colors"
-                      prop.text (string state.OppScore)
-                      prop.onClick (fun _ -> dispatch (ShowModal OpposingTeamScoreModal))
-                      prop.title "Click to add score for opposing team"
+        if showScoreboard then
+          Html.div [
+            prop.className "w-full bg-gradient-to-r from-indigo-600 via-purple-600 to-purple-700 text-white"
+            prop.children [
+              Html.div [
+                prop.className "max-w-7xl mx-auto px-4 py-2 flex items-center justify-center relative"
+                prop.children [
+                  // Score centered
+                  Html.div [
+                    prop.className "flex items-center gap-6 text-3xl font-bold select-none"
+                    prop.children [
+                      Html.button [
+                        prop.className "px-4 py-1 rounded-lg transition-colors hover:bg-purple-700/40 focus:outline-none focus:ring-2 focus:ring-white/50"
+                        prop.text (string state.OurScore)
+                        prop.onClick (fun _ -> dispatch (ShowModal OurTeamScoreModal))
+                        prop.title "Add goal for our team"
+                        prop.ariaLabel "Our team score"
+                      ]
+                      Html.span [ prop.className "opacity-80"; prop.text "-" ]
+                      Html.button [
+                        prop.className "px-4 py-1 rounded-lg transition-colors hover:bg-purple-700/40 focus:outline-none focus:ring-2 focus:ring-white/50"
+                        prop.text (string state.OppScore)
+                        prop.onClick (fun _ -> dispatch (ShowModal OpposingTeamScoreModal))
+                        prop.title "Add goal for opposing team"
+                        prop.ariaLabel "Opposing team score"
+                      ]
                     ]
                   ]
-                ]
-                Html.button [
-                  prop.className "text-3xl font-bold tracking-wider focus:outline-none"
-                  prop.onClick (fun _ -> dispatch (ShowModal TimeManagerModal))
-                  prop.text (Time.formatMMSS (State.getElapsedSecondsInHalf state))
-                  prop.title "Manage game timer"
+                  // Timer pill positioned on right
+                  Html.button [
+                    prop.className "absolute right-4 top-1/2 -translate-y-1/2 bg-purple-600/40 backdrop-blur-sm px-6 py-2 rounded-full text-xl font-semibold tracking-wider hover:bg-purple-600/60 transition-colors focus:outline-none focus:ring-2 focus:ring-white/50"
+                    prop.onClick (fun _ -> dispatch (ShowModal TimeManagerModal))
+                    prop.text (Time.formatMMSS (State.getElapsedSecondsInHalf state))
+                    prop.title "Manage game timer"
+                    prop.ariaLabel "Game timer"
+                  ]
                 ]
               ]
             ]
           ]
-        ]
+        else Html.none
       ]
     ]

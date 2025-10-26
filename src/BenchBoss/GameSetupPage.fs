@@ -144,7 +144,7 @@ module GameSetupPage =
                                     elif starters.Count >= maxStarters then $"Max {maxStarters} Starters"
                                     else "Set Starter"
                                   )
-                                  prop.disabled ((not isStarter && starters.Count >= maxStarters))
+                                  prop.disabled (not isStarter && starters.Count >= maxStarters)
                                   prop.onClick (fun _ -> toggleStarter p.Id)
                                   prop.title (
                                     if isStarter then "Click to move this player to bench at game start"
