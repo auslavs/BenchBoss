@@ -165,7 +165,15 @@ module GameSetupPage =
         ]
       ]
 
-    let rosterListSection title description count contentClasses items renderItem emptyMessage =
+    let rosterListSection
+      (title: string)
+      (description: string)
+      (count: int)
+      (contentClasses: string)
+      items
+      renderItem
+      (emptyMessage: string)
+      =
       Html.div [
         prop.className "border border-purple-100 rounded-2xl bg-gradient-to-b from-purple-50 to-white p-5 space-y-4"
         prop.children [
