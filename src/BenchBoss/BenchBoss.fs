@@ -5,7 +5,6 @@ module Component =
   open Feliz.UseElmish
   open BenchBossApp.Components.BenchBoss.Types
   open BenchBossApp.Components.BenchBoss
-  open Feliz.Router
   open Browser.Dom
   [<ReactComponent>]
   let Render () =
@@ -24,14 +23,6 @@ module Component =
       window.addEventListener("popstate", handler)
       { new System.IDisposable with member _.Dispose() = window.removeEventListener("popstate", handler) })
 
-    // Push state.CurrentPage to URL when it changes
-    // React.useEffect((fun () ->
-    //   Browser.Dom.console.log("Syncing URL to state.CurrentPage:", Page.toString state.CurrentPage)
-    //   let desired = Routing.href state.CurrentPage
-    //   let current = Router.currentPath() |> Router.format
-    //   if current <> desired then Router.navigatePath(desired)
-    //   ), [| box state.CurrentPage |])
-
     let startTimer = fun _ -> dispatch StartTimer
     let pauseTimer = fun _ -> dispatch PauseTimer
     let stopTimer = fun _ -> dispatch StopTimer
@@ -45,13 +36,19 @@ module Component =
       prop.className "flex flex-col min-h-screen"
       prop.children [
         Layout.render dispatch state
-        // Page content based on current page
-        (match state.CurrentPage with
+        match state.CurrentPage with
          | GamePage -> GamePage.RenderGamePage state dispatch
          | ManageTeamPage -> ManageTeamPage.render state dispatch
-         | GameSetupPage -> BenchBossApp.Components.BenchBoss.GameSetupPage.View state dispatch
-         | HomePage -> BenchBossApp.Components.BenchBoss.HomePage.View state dispatch
-         | Page.NotFoundPage -> BenchBossApp.Components.BenchBoss.NotFoundPage.View dispatch)
+         | GameSetupPage ->
+             GameSetupPage.View
+              {| TeamPlayers = state.TeamPlayers;
+                 GamePlayers = state.Game.Players;
+                 FieldPlayerTarget = state.FieldPlayerTarget;
+                 Cancel = fun () -> dispatch (NavigateToPage HomePage);
+                 SetFieldPlayerTarget = fun v -> dispatch (SetFieldPlayerTarget v);
+                 StartNewGame = fun (starting, bench) -> dispatch (StartNewGame (starting, bench)) |}
+         | HomePage -> HomePage.View state dispatch
+         | NotFoundPage -> NotFoundPage.View dispatch
 
         Modals.OurTeam.View(
           state.CurrentModal = OurTeamScoreModal,
