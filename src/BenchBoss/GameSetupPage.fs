@@ -11,14 +11,33 @@ module GameSetupPage =
     let initialSelected = state.Game.Players |> List.map _.Id |> Set.ofList // if coming from existing game
     let selectedPlayers, setSelectedPlayers = React.useState initialSelected
     let starters, setStarters = React.useState (Set.empty<PlayerId>)
+    let maxStarters = state.FieldPlayerTarget // cap equals configured on-field target
+
+    // Ensure starters never exceed maxStarters if target reduced mid-setup
+    React.useEffect((fun () ->
+      if starters.Count > maxStarters then
+        let trimmed = starters |> Seq.take maxStarters |> Set.ofSeq
+        setStarters trimmed
+    ), [| box starters; box maxStarters |])
 
     let toggleSelect (pid:PlayerId) =
-      if selectedPlayers.Contains pid then setSelectedPlayers (selectedPlayers.Remove pid)
-      else setSelectedPlayers (selectedPlayers.Add pid)
+      if selectedPlayers.Contains pid then
+        // Deselect also removes starter designation if present
+        setSelectedPlayers (selectedPlayers.Remove pid)
+        if starters.Contains pid then setStarters (starters.Remove pid)
+      else
+        setSelectedPlayers (selectedPlayers.Add pid)
 
     let toggleStarter (pid:PlayerId) =
-      if starters.Contains pid then setStarters (starters.Remove pid)
-      else setStarters (starters.Add pid)
+      if starters.Contains pid then
+        // Demote to bench (still selected if checkbox checked)
+        setStarters (starters.Remove pid)
+      else if starters.Count < maxStarters then
+        // Promote to starter only if capacity available
+        setStarters (starters.Add pid)
+      else
+        // Ignore clicks when at capacity (button will appear disabled visually)
+        ()
 
     let roster = state.TeamPlayers
 
@@ -27,9 +46,20 @@ module GameSetupPage =
 
     let startGame _ =
       if canStart then
-        let starting = if starters.Count = 0 then [] else starters |> Set.toList
-        let bench = (selectedPlayers - (Set.ofList starting)) |> Set.toList
-        dispatch (StartNewGame (starting, bench))
+        // Determine starting players respecting FieldPlayerTarget.
+        // If user marked more starters than allowed, overflow becomes bench.
+        // We preserve roster order for deterministic selection.
+        let rosterStarters =
+          if starters.Count = 0 then []
+          else roster |> List.filter (fun tp -> starters.Contains tp.Id)
+        let maxStarting = state.FieldPlayerTarget
+        let startingPlayers =
+          if List.isEmpty rosterStarters then []
+          else rosterStarters |> List.take (min maxStarting rosterStarters.Length) |> List.map _.Id
+        let startingSet = startingPlayers |> Set.ofList
+        // Bench = all selected players not in (trimmed) starting list (includes any overflow starters)
+        let benchPlayers = selectedPlayers |> Set.filter (fun id -> not (startingSet.Contains id)) |> Set.toList
+        dispatch (StartNewGame (startingPlayers, benchPlayers))
 
     Html.div [
       prop.className "flex-1 p-6 bg-gradient-to-b from-green-50 to-blue-50"
@@ -83,9 +113,11 @@ module GameSetupPage =
                       let isStarter = starters.Contains p.Id
                       let faded = if isSelected then "" else "opacity-60"
                       let rowClasses = $"flex items-center justify-between p-3 hover:bg-gray-50 {faded}"
+                      // Unified purple outlined style per user request (white background always)
                       let starterBtnClasses =
-                        if isStarter then "text-xs px-2 py-1 rounded border bg-green-600 text-white border-green-600"
-                        else "text-xs px-2 py-1 rounded border border-green-600 text-green-700 hover:bg-green-50"
+                        if isStarter then "text-xs px-2 py-1 rounded border border-purple-600 text-purple-700 bg-white hover:bg-purple-50"
+                        elif starters.Count >= maxStarters then "text-xs px-2 py-1 rounded border border-purple-300 text-purple-300 bg-white cursor-not-allowed"
+                        else "text-xs px-2 py-1 rounded border border-purple-600 text-purple-700 bg-white hover:bg-purple-50"
                       Html.div [
                         prop.key (string p.Id)
                         prop.className rowClasses
@@ -104,12 +136,23 @@ module GameSetupPage =
                           Html.div [
                             prop.className "flex items-center gap-3"
                             prop.children [
-                              Html.button [
-                                prop.className starterBtnClasses
-                                prop.text (if isStarter then "Starter" else "Make Starter")
-                                prop.disabled (not isSelected)
-                                prop.onClick (fun _ -> toggleStarter p.Id)
-                              ]
+                              if isSelected then
+                                Html.button [
+                                  prop.className starterBtnClasses
+                                  prop.text (
+                                    if isStarter then "Bench"
+                                    elif starters.Count >= maxStarters then $"Max {maxStarters} Starters"
+                                    else "Set Starter"
+                                  )
+                                  prop.disabled ((not isStarter && starters.Count >= maxStarters))
+                                  prop.onClick (fun _ -> toggleStarter p.Id)
+                                  prop.title (
+                                    if isStarter then "Click to move this player to bench at game start"
+                                    elif starters.Count >= maxStarters then "Starter capacity reached. Demote a starter to free a spot."
+                                    else "Mark player to begin on field"
+                                  )
+                                ]
+                              else Html.none
                             ]
                           ]
                         ]

@@ -275,12 +275,18 @@ module State =
       match name.Trim() with
       | "" -> state, Cmd.none
       | trimmed ->
+        // NOTE: We intentionally do NOT auto-add a newly created player to the current game roster.
+        // Previously we called Game.addPlayer here which meant simply creating a player implicitly
+        // made them available for (and visible in) an in-progress or upcoming game. This was confusing
+        // and looked like "adding a player starts a game" to the user. New players should remain
+        // off the game roster until explicitly:
+        //  1. Toggled available on the Manage Team page (checkbox), OR
+        //  2. Included during Game Setup and StartNewGame.
         let p = TeamPlayer.create trimmed
-        let updatedGame = Game.addPlayer p state.Game
         let s1 = { 
           state with 
             TeamPlayers = state.TeamPlayers @ [p]
-            Game = updatedGame
+            // Game unchanged; player not auto-added
             CurrentModal = NoModal
         }
         s1, Cmd.none
@@ -329,12 +335,17 @@ module State =
       Store.save newState
       newState, Cmd.none
     | StartNewGame (starting, bench) ->
-      // Build new game players from current TeamPlayers
-      let toGamePlayer status (tp:TeamPlayer) = 
+      // Enforce FieldPlayerTarget at game start: if more starters are passed than allowed, overflow moves to bench.
+      let maxStarting = state.FieldPlayerTarget
+      let trimmedStarting, overflow =
+        if List.length starting > maxStarting then starting |> List.splitAt maxStarting else starting, []
+      // Combine provided bench with any overflow starters.
+      let combinedBench = bench @ overflow
+      let toGamePlayer status (tp:TeamPlayer) =
         { Id = tp.Id; Name = tp.Name; InGameStatus = status; PlayedSeconds = 0; BenchedSeconds = 0 }
-      let startingSet = starting |> Set.ofList
-      let benchSet = bench |> Set.ofList
-      // Filter out any ids not in roster, ignore duplicates
+      let startingSet = trimmedStarting |> Set.ofList
+      let benchSet = combinedBench |> Set.ofList
+      // Filter out any ids not in roster; remove duplicates and ensure no overlap.
       let rosterIds = state.TeamPlayers |> List.map _.Id |> Set.ofList
       let validStarting = startingSet |> Set.filter (fun id -> rosterIds.Contains id)
       let validBench = benchSet |> Set.filter (fun id -> rosterIds.Contains id && not (validStarting.Contains id))
