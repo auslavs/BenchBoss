@@ -20,6 +20,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -57,12 +58,35 @@ jobs:
           commit_message: 'chore: update docs build'
           file_pattern: docs
 
-      - name: Commit docs preview
+      - name: Commit docs preview to main
         if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: 'chore: update docs preview'
-          file_pattern: docs/pr/${{ env.SAFE_BRANCH }}
+        env:
+          SAFE_BRANCH: ${{ env.SAFE_BRANCH }}
+        run: |
+          set -eo pipefail
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+
+          tmp_dir="$(mktemp -d)"
+          rsync -a "docs/pr/${SAFE_BRANCH}/" "${tmp_dir}/"
+
+          git fetch origin main
+          git checkout main
+          git pull --ff-only origin main
+
+          mkdir -p "docs/pr/${SAFE_BRANCH}"
+          rsync -a --delete "${tmp_dir}/" "docs/pr/${SAFE_BRANCH}/"
+
+          git add "docs/pr/${SAFE_BRANCH}"
+          if git diff --staged --quiet; then
+            echo "No preview changes to commit."
+          else
+            git commit -m "chore: update docs preview for ${SAFE_BRANCH}"
+            git push origin HEAD:main
+          fi
+
+          rm -rf "${tmp_dir}"
+          git checkout -
 
       - name: Compute preview URL
         if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
