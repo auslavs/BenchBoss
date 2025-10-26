@@ -1,0 +1,156 @@
+name: Build and publish docs
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  build:
+    name: Build site
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Prepare preview environment
+        if: github.event_name == 'pull_request'
+        id: preview
+        run: |
+          SAFE_BRANCH=$(echo "${{ github.head_ref }}" | sed 's/[^A-Za-z0-9._-]/-/g')
+          echo "SAFE_BRANCH=$SAFE_BRANCH" >> $GITHUB_ENV
+          echo "safe_branch=$SAFE_BRANCH" >> $GITHUB_OUTPUT
+          echo "VITE_BASE=/BenchBoss/pr/$SAFE_BRANCH/" >> $GITHUB_ENV
+          echo "VITE_OUT_DIR=../docs/pr/$SAFE_BRANCH" >> $GITHUB_ENV
+          mkdir -p "docs/pr/$SAFE_BRANCH"
+
+      - name: Build site
+        run: |
+          npm run build
+
+      - name: Publish docs for main
+        if: github.event_name == 'push'
+        run: |
+          set -eo pipefail
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+
+          if [ ! -d docs ]; then
+            echo "Docs output not found" >&2
+            exit 1
+          fi
+
+          original_sha="$(git rev-parse HEAD)"
+          tmp_dir="$(mktemp -d)"
+          rsync -a docs/ "${tmp_dir}/"
+
+          git fetch origin publish || true
+          if git ls-remote --exit-code origin publish >/dev/null 2>&1; then
+            git checkout publish
+            git pull --ff-only origin publish
+          else
+            git checkout -B publish origin/main
+          fi
+
+          rm -rf docs
+          mkdir -p docs
+          rsync -a --delete "${tmp_dir}/" docs/
+
+          git add docs
+          if git diff --staged --quiet; then
+            echo "No docs changes to publish."
+          else
+            git commit -m "chore: publish docs update"
+            git push origin HEAD:publish
+          fi
+
+          rm -rf "${tmp_dir}"
+          git checkout --detach "${original_sha}"
+
+      - name: Commit docs preview to publish branch
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          SAFE_BRANCH: ${{ env.SAFE_BRANCH }}
+        run: |
+          set -eo pipefail
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+
+          original_sha="$(git rev-parse HEAD)"
+          tmp_dir="$(mktemp -d)"
+          rsync -a "docs/pr/${SAFE_BRANCH}/" "${tmp_dir}/"
+
+          git fetch origin publish || true
+          if git ls-remote --exit-code origin publish >/dev/null 2>&1; then
+            git checkout publish
+            git pull --ff-only origin publish
+          else
+            git checkout -B publish origin/main
+          fi
+
+          mkdir -p "docs/pr/${SAFE_BRANCH}"
+          rsync -a --delete "${tmp_dir}/" "docs/pr/${SAFE_BRANCH}/"
+
+          git add "docs/pr/${SAFE_BRANCH}"
+          if git diff --staged --quiet; then
+            echo "No preview changes to commit."
+          else
+            git commit -m "chore: update docs preview for ${SAFE_BRANCH}"
+            git push origin HEAD:publish
+          fi
+
+          rm -rf "${tmp_dir}"
+          git checkout --detach "${original_sha}"
+
+      - name: Compute preview URL
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        id: preview_url
+        run: |
+          echo "url=https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/pr/${SAFE_BRANCH}/" >> $GITHUB_OUTPUT
+
+      - name: Share preview link
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        uses: actions/github-script@v7
+        env:
+          PREVIEW_URL: ${{ steps.preview_url.outputs.url }}
+        with:
+          script: |
+            const marker = '<!-- docs-preview-link -->';
+            const body = `${marker}\n🚀 A preview build is available at [${process.env.PREVIEW_URL}](${process.env.PREVIEW_URL}).`;
+            const { owner, repo } = context.repo;
+            const issue_number = context.payload.pull_request.number;
+            const comments = await github.rest.issues.listComments({ owner, repo, issue_number, per_page: 100 });
+            const existing = comments.data.find(comment => comment.body.startsWith(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number, body });
+            }
+
+      - name: Preview unavailable for forked PRs
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
+        run: |
+          echo "Preview commits are skipped for pull requests from forks due to permission restrictions."
