@@ -62,7 +62,7 @@ module GameSetupPage =
         dispatch (StartNewGame (startingPlayers, benchPlayers))
 
     Html.div [
-      prop.className "flex-1 p-6 bg-gradient-to-b from-green-50 to-blue-50"
+      prop.className "flex-1 p-6 bg-gradient-to-b from-purple-50 to-indigo-50"
       prop.children [
         Html.div [
           prop.className "max-w-4xl mx-auto space-y-8"
@@ -85,13 +85,12 @@ module GameSetupPage =
                 Html.div [
                   prop.className "flex flex-wrap gap-4 text-sm"
                   prop.children [
-                    Html.div [ prop.className "px-3 py-2 rounded bg-purple-50 text-purple-700 font-medium"; prop.text ($"Selected: {selectedPlayers.Count}") ]
-                    Html.div [ prop.className "px-3 py-2 rounded bg-green-50 text-green-700 font-medium"; prop.text ($"Starters: {starters.Count}") ]
-                    Html.div [ prop.className "px-3 py-2 rounded bg-gray-100 text-gray-600"; prop.text "Starters optional" ]
+                    Html.div [ prop.className "px-3 py-2 rounded bg-purple-50 text-purple-700 font-medium"; prop.text $"Selected: {selectedPlayers.Count}" ]
+                    Html.div [ prop.className "px-3 py-2 rounded bg-green-50 text-green-700 font-medium"; prop.text $"Starters: {starters.Count}" ]
                     Html.div [
                       prop.className "flex items-center gap-2 px-3 py-2 rounded bg-blue-50 text-blue-700"
                       prop.children [
-                        Html.span [ prop.className "font-medium"; prop.text "On Field" ]
+                        Html.span [ prop.className "font-medium"; prop.text "Players on field" ]
                         Html.select [
                           prop.className "border border-blue-300 rounded px-2 py-1 bg-white text-sm"
                           prop.value state.FieldPlayerTarget
