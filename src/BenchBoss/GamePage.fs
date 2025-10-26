@@ -30,7 +30,7 @@ module GamePage =
 
 
   [<ReactComponent>]
-  let private draggablePlayer (p:GamePlayer) (onDoubleClick: (unit -> unit) option) =
+  let private DraggablePlayer (p:GamePlayer) (onDoubleClick: (unit -> unit) option) =
     let lastTapTime, setLastTapTime = React.useState<System.DateTime option>(None)
     
     let handleTap () =
@@ -73,7 +73,7 @@ module GamePage =
     ] @ fieldSlotProps slotIndex @ [
       prop.children [
         match playerOpt with
-        | Some player -> draggablePlayer player None
+        | Some player -> DraggablePlayer player None
         | None -> Html.span [ prop.className "text-gray-400 text-sm pointer-events-none"; prop.text "Drop player here" ]
       ]
     ])
@@ -118,7 +118,7 @@ module GamePage =
             prop.className "space-y-2"
             prop.children [
               for player in benchPlayerObjs do
-                draggablePlayer player (Some (fun () -> handleDoubleClick player.Id))
+                DraggablePlayer player (Some (fun () -> handleDoubleClick player.Id))
             ]
           ]
           if benchPlayerObjs.IsEmpty then
