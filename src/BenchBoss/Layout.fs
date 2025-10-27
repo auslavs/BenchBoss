@@ -15,7 +15,7 @@ module Layout =
         let hasActiveGame = not (state.Game.Players |> List.isEmpty)
         let showScoreboard =
           match state.CurrentPage with
-          | Page.HomePage | Page.ManageTeamPage -> hasActiveGame
+          | Page.HomePage | Page.ManageTeamPage | Page.GameSetupPage -> hasActiveGame
           | _ -> true
 
         if showScoreboard then
