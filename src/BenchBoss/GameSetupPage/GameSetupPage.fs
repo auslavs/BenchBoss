@@ -14,6 +14,7 @@ module GameSetupPage =
 
   type SetupModel = {
     TeamPlayers: TeamPlayer list
+    CurrentFieldPlayerTarget: int
     Step: SetupStep
   }
 
@@ -31,9 +32,10 @@ module GameSetupPage =
     | AdvanceToLineup of TeamPlayer list
     | BackToSelection
 
-  let setupInit (teamPlayers: TeamPlayer list) : SetupModel * Cmd<SetupMsg> =
+  let setupInit (teamPlayers: TeamPlayer list) currentFieldPlayerTarget : SetupModel * Cmd<SetupMsg> =
     {
       TeamPlayers = teamPlayers
+      CurrentFieldPlayerTarget = currentFieldPlayerTarget
       Step = SelectPlayers {| SelectedPlayers = [] |}
     },
     Cmd.none
@@ -116,7 +118,7 @@ module GameSetupPage =
 
   [<ReactComponent>]
   let View (p: SetupViewProps) =
-    let setupModel, setupDispatch = React.useElmish (setupInit p.TeamPlayers, setupUpdate p.FieldPlayerTarget)
+    let setupModel, setupDispatch = React.useElmish (setupInit p.TeamPlayers p.FieldPlayerTarget, setupUpdate p.FieldPlayerTarget)
 
     let isSelectPlayers =
       match setupModel.Step with
@@ -182,7 +184,7 @@ module GameSetupPage =
               {| startingPlayers = detail.Starters
                  benchedPlayers = detail.Bench
                  toggleStarter = fun pid -> pid |> ToggleStarter |> setupDispatch
-                 CurrentFieldPlayerTarget = p.FieldPlayerTarget
+                 CurrentFieldPlayerTarget = setupModel.CurrentFieldPlayerTarget
                  SetFieldPlayerTarget = p.SetFieldPlayerTarget
                  onBack = fun () -> BackToSelection |> setupDispatch
                  onStartGame = fun () ->

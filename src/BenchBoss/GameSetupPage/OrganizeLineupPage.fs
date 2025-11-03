@@ -9,7 +9,6 @@ module OrganizeLineupPage =
     {| startingPlayers: TeamPlayer list
        benchedPlayers: TeamPlayer list
        toggleStarter: PlayerId -> unit
-
        CurrentFieldPlayerTarget: int
        SetFieldPlayerTarget: int -> unit
        onBack: unit -> unit
@@ -42,6 +41,10 @@ module OrganizeLineupPage =
                 Select {|
                   defaultValue = $"{props.CurrentFieldPlayerTarget} players"
                   options = [ for size in 4 .. 11 do string size, $"{size} players" ]
+                  onChange = fun v -> 
+                    match System.Int32.TryParse v with
+                    | true, num -> props.SetFieldPlayerTarget num
+                    | false, _ -> ()
                 |}
               ]
             ]

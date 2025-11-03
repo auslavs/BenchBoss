@@ -25,16 +25,16 @@ module Common =
       svg.stroke "currentColor"
       yield! props
       svg.children [
-          Svg.path [
-              svg.strokeLineCap "round"
-              svg.strokeLineJoin "round"
-              svg.d "M12.75 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z"
-          ]
-          Svg.path [
-              svg.strokeLineCap "round"
-              svg.strokeLineJoin "round"
-              svg.d "m16 11 2 2 4-4"
-          ]
+        Svg.path [
+          svg.strokeLineCap "round"
+          svg.strokeLineJoin "round"
+          svg.d "M12.75 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z"
+        ]
+        Svg.path [
+          svg.strokeLineCap "round"
+          svg.strokeLineJoin "round"
+          svg.d "m16 11 2 2 4-4"
+        ]
       ]
     ]
 
@@ -102,7 +102,7 @@ module Common =
     ]
 
 
-  let Select (props:{| defaultValue: string; options: (string * string) list |} ) =
+  let Select (props:{| defaultValue: string; options: (string * string) list; onChange: string -> unit |} ) =
     Html.div [
       Html.div [
         prop.className "mt-2 grid grid-cols-1"
@@ -110,6 +110,7 @@ module Common =
           Html.select [
             prop.className "col-start-1 row-start-1 w-full appearance-none rounded-md bg-white py-1.5 pr-8 pl-3 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-purple-600 sm:text-sm/6 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:*:bg-gray-800 dark:focus-visible:outline-purple-500"
             prop.defaultValue props.defaultValue
+            prop.onChange props.onChange
             prop.children [
               for value, label in props.options do
                 Html.option [
