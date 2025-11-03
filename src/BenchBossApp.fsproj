@@ -21,7 +21,10 @@
     <Compile Include="BenchBoss\GamePage.fs" />
     <Compile Include="BenchBoss\ManageTeamPage.fs" />
     <Compile Include="BenchBoss\HomePage.fs" />
-    <Compile Include="BenchBoss\GameSetupPage.fs" />
+    <Compile Include="BenchBoss\GameSetupPage\Common.fs" />
+    <Compile Include="BenchBoss\GameSetupPage\SelectPlayersPage.fs" />
+    <Compile Include="BenchBoss\GameSetupPage\OrganizeLineupPage.fs" />
+    <Compile Include="BenchBoss\GameSetupPage\GameSetupPage.fs" />
     <Compile Include="BenchBoss\NotFoundPage.fs" />
     <Compile Include="BenchBoss\BenchBoss.fs" />
     <Compile Include="Main.fs" />

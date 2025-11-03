@@ -42,7 +42,6 @@ module Component =
          | GameSetupPage ->
              GameSetupPage.View
               {| TeamPlayers = state.TeamPlayers;
-                 GamePlayers = state.Game.Players;
                  FieldPlayerTarget = state.FieldPlayerTarget;
                  Cancel = fun () -> dispatch (NavigateToPage HomePage);
                  SetFieldPlayerTarget = fun v -> dispatch (SetFieldPlayerTarget v);
