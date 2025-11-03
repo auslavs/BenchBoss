@@ -206,3 +206,4 @@ out
 *.fs.js.map
 .idea/.idea.BenchBoss.dir/.idea
 src/.idea
+docs

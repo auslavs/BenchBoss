@@ -76,7 +76,7 @@ module OrganizeLineupPage =
               ]
             ]
             Html.div [
-              prop.className "space-y-2 bg-purple-50 rounded-xl p-3 border-2 border-purple-200 min-h-[100px]"
+              prop.className "space-y-2 bg-purple-50 rounded-xl p-3 border-2 border-purple-200"
               prop.children [
                 if starters.Length = 0 then
                   Html.div [
@@ -88,15 +88,16 @@ module OrganizeLineupPage =
                     Html.div [
                       prop.key player.Id
                       prop.className "flex items-center justify-between p-3 bg-white rounded-lg"
+                      prop.onClick (fun e -> e.preventDefault(); player.Id |> props.toggleStarter)
                       prop.children [
                         Html.span [ prop.text player.Name ]
-                        // Button [
-                        //   button.variant "ghost"
-                        //   button.size "sm"
-                        //   button.className "text-gray-600 hover:text-purple-600 hover:bg-purple-50"
-                        //   button.onClick (fun _ -> moveToBench player)
-                        //   button.children [ Armchair [ armchair.className "w-4 h-4" ] ]
-                        // ]
+
+                        Html.button [
+                          prop.className "text-gray-600 hover:text-purple-600 hover:bg-purple-50 p-1 rounded"
+                          prop.children [
+                            Armchair [ svg.className "w-4 h-4" ]
+                          ]
+                        ]
                       ]
                     ]
               ]
@@ -114,15 +115,11 @@ module OrganizeLineupPage =
                 Html.div [
                   prop.className "flex items-center gap-2"
                   prop.children [
-                    //Armchair [ armchair.className "w-5 h-5 text-purple-600" ]
+                    Armchair [ svg.className "w-5 h-5 text-purple-600" ]
                     Html.h3 [ prop.className "text-purple-700"; prop.text "On Bench" ]
                   ]
                 ]
                 PrimaryBadge (string bench.Length)
-                // Badge [
-                //   badge.className "bg-purple-500 text-white hover:bg-purple-500"
-                //   badge.children [ Html.text (string bench.Length) ]
-                // ]
               ]
             ]
             Html.div [
@@ -161,7 +158,6 @@ module OrganizeLineupPage =
             Html.button [
               prop.type'.button
               prop.className "w-full sm:w-auto h-14 px-6 py-3 text-purple-600 hover:bg-purple-50 rounded-lg"
-              //prop.className "flex-1 h-14 border-purple-300 text-purple-600 hover:bg-purple-50"
               prop.onClick (fun _ -> onBack ())
               prop.children [ Html.text "Back" ]
             ]
