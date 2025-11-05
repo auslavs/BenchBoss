@@ -68,7 +68,7 @@ module HomePage =
           prop.className "max-w-5xl mx-auto flex flex-col gap-8"
           prop.children [
             Html.div [
-              prop.className "bg-white rounded-xl shadow p-8 space-y-6"
+              prop.className "bg-white rounded-xl shadow p-4 space-y-6"
               prop.children [
                 Html.h1 [ prop.className "text-3xl font-bold"; prop.text "BenchBoss" ]
                 Html.p [ prop.className "text-gray-600"; prop.text "Manage fair play time and keep the game organized." ]

@@ -6,16 +6,15 @@ module OrganizeLineupPage =
 
   [<ReactComponent>]
   let Component (props:
-    {| startingPlayers: TeamPlayer list
-       benchedPlayers: TeamPlayer list
-       toggleStarter: PlayerId -> unit
-       CurrentFieldPlayerTarget: int
+    {| TeamSetupData: TeamSetupData
+       SelectStarter: PlayerId -> unit
+       DeselectStarter: PlayerId -> unit
        SetFieldPlayerTarget: int -> unit
        onBack: unit -> unit
-       onStartGame: unit -> unit |}) =
+       onStartGame: TeamSetupData -> unit |}) =
 
-    let starters = props.startingPlayers
-    let bench = props.benchedPlayers
+    let starters = props.TeamSetupData.OnField
+    let bench = props.TeamSetupData.OnBench
     let onBack = props.onBack
     let onStartGame = props.onStartGame
 
@@ -35,13 +34,13 @@ module OrganizeLineupPage =
               prop.className "rounded-xl p-4 border-2 border-purple-200"
               prop.children [
                 Html.label [
-                  prop.className "block text-sm text-gray-700 mb-2"
+                  prop.className "block text-sm text-purple-700 mb-2"
                   prop.text "Players on Field"
                 ]
                 Select {|
-                  defaultValue = $"{props.CurrentFieldPlayerTarget} players"
-                  options = [ for size in 4 .. 11 do string size, $"{size} players" ]
-                  onChange = fun v -> 
+                  DefaultValue = props.TeamSetupData.MaxOnField |> string
+                  Options = [ for size in 4 .. 11 do string size, $"{size} players" ]
+                  OnChange = fun v -> 
                     match System.Int32.TryParse v with
                     | true, num -> props.SetFieldPlayerTarget num
                     | false, _ -> ()
@@ -53,7 +52,7 @@ module OrganizeLineupPage =
               prop.children [
                 Html.div [
                   prop.className "text-3xl text-purple-700"
-                  prop.text (starters.Length + bench.Length |> string)
+                  prop.text (starters.Count |> string)
                 ]
                 Html.div [ prop.className "text-xs text-purple-600 mt-1"; prop.text "Playing Today" ]
               ]
@@ -75,13 +74,13 @@ module OrganizeLineupPage =
                     Html.h3 [ prop.className "text-purple-700"; prop.text "Starting Lineup" ]
                   ]
                 ]
-                PrimaryBadge (string 999)
+                PrimaryBadge (string starters.Count)
               ]
             ]
             Html.div [
               prop.className "space-y-2 bg-purple-50 rounded-xl p-3 border-2 border-purple-200"
               prop.children [
-                if starters.Length = 0 then
+                if starters.Count = 0 then
                   Html.div [
                     prop.className "text-center py-6 text-gray-400 text-sm"
                     prop.text "No starters selected yet"
@@ -89,11 +88,11 @@ module OrganizeLineupPage =
                 else
                   for player in starters do
                     Html.div [
-                      prop.key player.Id
+                      prop.key player.Key
                       prop.className "flex items-center justify-between p-3 bg-white rounded-lg"
-                      prop.onClick (fun e -> e.preventDefault(); player.Id |> props.toggleStarter)
+                      prop.onClick (fun e -> e.preventDefault(); player.Key |> props.DeselectStarter)
                       prop.children [
-                        Html.span [ prop.text player.Name ]
+                        Html.span [ prop.text player.Value.Name ]
 
                         Html.button [
                           prop.className "text-gray-600 hover:text-purple-600 hover:bg-purple-50 p-1 rounded"
@@ -122,13 +121,13 @@ module OrganizeLineupPage =
                     Html.h3 [ prop.className "text-purple-700"; prop.text "On Bench" ]
                   ]
                 ]
-                PrimaryBadge (string bench.Length)
+                PrimaryBadge (string bench.Count)
               ]
             ]
             Html.div [
               prop.className "space-y-2 bg-white rounded-xl p-3 border-2 border-purple-200 min-h-[100px]"
               prop.children [
-                if bench.Length = 0 then
+                if bench.Count = 0 then
                   Html.div [
                     prop.className "text-center py-6 text-gray-400 text-sm"
                     prop.text "All players in starting lineup"
@@ -136,11 +135,11 @@ module OrganizeLineupPage =
                 else
                   for player in bench do
                     Html.div [
-                      prop.key player.Id
+                      prop.key player.Key
                       prop.className "flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200"
-                      prop.onClick (fun e -> e.preventDefault(); player.Id |> props.toggleStarter)
+                      prop.onClick (fun e -> e.preventDefault(); player.Key |> props.SelectStarter)
                       prop.children [
-                        Html.span [ prop.text player.Name ]
+                        Html.span [ prop.text player.Value.Name ]
 
                         Html.button [
                           prop.className "text-gray-600 hover:text-purple-600 hover:bg-purple-50 p-1 rounded"
@@ -167,7 +166,7 @@ module OrganizeLineupPage =
             Html.button [
               prop.type'.button
               prop.className "w-full sm:w-auto h-14 px-6 py-3 bg-purple-600 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-purple-700 flex items-center justify-center"
-              prop.onClick (fun _ -> onStartGame ())
+              prop.onClick (fun _ -> onStartGame props.TeamSetupData)
               prop.children [ Html.text "Start Game" ]
             ]
           ]

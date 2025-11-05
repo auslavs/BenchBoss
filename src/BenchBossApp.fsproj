@@ -35,5 +35,6 @@
     <PackageReference Include="Fable.React" Version="9.4.0" />
     <PackageReference Include="Thoth.Json" Version="10.4.1" />
     <PackageReference Include="Feliz.Router" Version="4.0.0" />
+    <PackageReference Include="FsToolkit.ErrorHandling" Version="5.1.0" />
   </ItemGroup>
 </Project>

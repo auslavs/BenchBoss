@@ -7,14 +7,14 @@ module GameSetupPage =
   open Elmish
   open Feliz.UseElmish
   open BenchBossApp.Components.BenchBoss.GameSetupPage
+  open BenchBossApp.Components.BenchBoss.Types
 
   type SetupStep =
-    | SelectPlayers of {| SelectedPlayers: TeamPlayer list;  |}
-    | ChooseLineup of {| Starters: TeamPlayer list; Bench: TeamPlayer list |}
+    | SelectPlayers of Map<PlayerId,TeamPlayer>
+    | ChooseLineup of TeamSetupData
 
   type SetupModel = {
-    TeamPlayers: TeamPlayer list
-    CurrentFieldPlayerTarget: int
+    TeamPlayers: Map<PlayerId,TeamPlayer>
     Step: SetupStep
   }
 
@@ -22,103 +22,93 @@ module GameSetupPage =
     TeamPlayers: TeamPlayer list
     FieldPlayerTarget: int
     Cancel: unit -> unit
-    SetFieldPlayerTarget: int -> unit
-    StartNewGame: PlayerId list * PlayerId list -> unit
+    StartNewGame: TeamSetupData -> unit
   |}
 
   type SetupMsg =
     | ToggleSelected of PlayerId
-    | ToggleStarter of PlayerId
-    | AdvanceToLineup of TeamPlayer list
+    | SelectStarter of PlayerId
+    | DeselectStarter of PlayerId
+    | AdvanceToLineup of Map<PlayerId,TeamPlayer>
+    | SetFieldPlayerTarget of int
     | BackToSelection
 
-  let setupInit (teamPlayers: TeamPlayer list) currentFieldPlayerTarget : SetupModel * Cmd<SetupMsg> =
+  let setupInit (teamPlayers: TeamPlayer list) : SetupModel * Cmd<SetupMsg> =
     {
-      TeamPlayers = teamPlayers
-      CurrentFieldPlayerTarget = currentFieldPlayerTarget
-      Step = SelectPlayers {| SelectedPlayers = [] |}
+      TeamPlayers = teamPlayers |> List.map (fun p -> p.Id, p) |> Map.ofList
+      Step = SelectPlayers Map.empty
     },
     Cmd.none
 
-  let setupUpdate (maxPlayersOnField: int) (msg: SetupMsg) (model: SetupModel) : SetupModel * Cmd<SetupMsg> =
+  let setupUpdate (initialMaxPlayersOnField: int) (msg: SetupMsg) (model: SetupModel) : SetupModel * Cmd<SetupMsg> =
     match msg with
     | ToggleSelected pid ->
-
       match model.Step with
       | SelectPlayers state ->
-          let isSelected = state.SelectedPlayers |> List.exists (fun p -> p.Id = pid)
           let newSelected =
-            if isSelected then
-              state.SelectedPlayers |> List.filter (fun p -> p.Id <> pid)
+            if Map.containsKey pid state then
+              Map.remove pid state
             else
-              match model.TeamPlayers |> List.tryFind (fun p -> p.Id = pid) with
-              | Some player -> player :: state.SelectedPlayers
-              | None -> state.SelectedPlayers
+              match Map.tryFind pid model.TeamPlayers with
+              | Some player -> Map.add pid player state
+              | None -> state
 
-          { model with
-              Step = SelectPlayers {| SelectedPlayers = newSelected |}
-          }, Cmd.none
+          { model with Step = SelectPlayers newSelected }, Cmd.none
       | ChooseLineup _  ->
-          // Ignore toggles in ChooseLineup step
           model, Cmd.none
 
-      
-    | ToggleStarter pid ->
+    | SelectStarter pId ->
+        match model.Step with
+        | ChooseLineup state ->
+            match Map.tryFind pId state.OnBench with
+            | Some player ->
+                match TeamSetupData.addToField player state with
+                | Ok updatedTeam ->
+                    { model with Step = ChooseLineup updatedTeam }, Cmd.none
+                | Error err ->
+                    printfn "Error adding to field: %A" err
+                    model, Cmd.none
+            | None -> model, Cmd.none
+        | SelectPlayers _  -> model, Cmd.none
 
-      match model.Step with
-      | ChooseLineup state ->
-          let isStarter = state.Starters |> List.exists (fun p -> p.Id = pid)
-          let isBench = state.Bench |> List.exists (fun p -> p.Id = pid)
-
-          match isStarter, isBench with
-          | true, _ ->
-              // Remove from starters
-              let newStarters = state.Starters |> List.filter (fun p -> p.Id <> pid)
-              let newBench = state.Bench @ (state.Starters |> List.filter (fun p -> p.Id = pid))
-              { model with
-                  Step = ChooseLineup {| Starters = newStarters; Bench = newBench |}
-              }, Cmd.none
-          | false, true ->
-              // Add to starters if we have room
-              if state.Starters.Length < maxPlayersOnField then
-                  let playerToAdd = state.Bench |> List.find (fun p -> p.Id = pid)
-                  let newStarters = playerToAdd :: state.Starters
-                  let newBench = state.Bench |> List.filter (fun p -> p.Id <> pid)
-                  { model with
-                      Step = ChooseLineup {| Starters = newStarters; Bench = newBench |}
-                  }, Cmd.none
-              else
-                  // Reached max, do not add
-                  model, Cmd.none
-            | _ ->
-              // Should not happen
-              model, Cmd.none
-
-      | SelectPlayers _  ->
-          // Ignore toggles in SelectPlayers step
-          model, Cmd.none
+    | DeselectStarter pId ->
+        match model.Step with
+        | ChooseLineup state ->
+            match Map.tryFind pId state.OnField with
+            | Some player ->
+                let updatedTeam = TeamSetupData.addToBench player state
+                { model with Step = ChooseLineup updatedTeam }, Cmd.none
+            | None -> model, Cmd.none
+        | SelectPlayers _  -> model, Cmd.none
 
     | AdvanceToLineup orderedSelection ->
 
-      let newStep = ChooseLineup {| Starters = []; Bench = orderedSelection |}
-      { model with Step = newStep }, Cmd.none
-
+        let team = TeamSetupData.create initialMaxPlayersOnField orderedSelection
+        { model with Step = ChooseLineup team }, Cmd.none
 
     | BackToSelection ->
 
         match model.Step with
         | ChooseLineup s ->
-            let newStep = SelectPlayers {| SelectedPlayers = s.Starters @ s.Bench |}
-            { model with Step = newStep }, Cmd.none
+            let allSelected =
+              Map.fold (fun acc key value -> Map.add key value acc) s.OnField s.OnBench
+            { model with Step = SelectPlayers allSelected }, Cmd.none
         | SelectPlayers _ ->
             // Already in selection step, no change
             model, Cmd.none
-      
-
+    | SetFieldPlayerTarget num ->
+        match model.Step with
+        | ChooseLineup s ->
+            let updatedTeam = TeamSetupData.setMaxOnField num s
+            { model with Step = ChooseLineup updatedTeam }, Cmd.none
+        | SelectPlayers _ ->
+            // No change in selection step
+            model, Cmd.none
 
   [<ReactComponent>]
   let View (p: SetupViewProps) =
-    let setupModel, setupDispatch = React.useElmish (setupInit p.TeamPlayers p.FieldPlayerTarget, setupUpdate p.FieldPlayerTarget)
+
+    let setupModel, setupDispatch = React.useElmish (setupInit p.TeamPlayers, setupUpdate p.FieldPlayerTarget)
 
     let isSelectPlayers =
       match setupModel.Step with
@@ -172,25 +162,20 @@ module GameSetupPage =
 
         //Content
         match setupModel.Step with
-        | SelectPlayers detail ->
+        | SelectPlayers selectedPlayers ->
             SelectPlayersPage.Component
               {| allPlayers = p.TeamPlayers
-                 selectedPlayers = detail.SelectedPlayers
+                 selectedPlayers = selectedPlayers
                  onContinue = fun selected -> selected |> AdvanceToLineup |> setupDispatch
                  togglePlayer = fun gp -> gp.Id |> ToggleSelected |> setupDispatch |}
 
         | ChooseLineup detail ->
             OrganizeLineupPage.Component
-              {| startingPlayers = detail.Starters
-                 benchedPlayers = detail.Bench
-                 toggleStarter = fun pid -> pid |> ToggleStarter |> setupDispatch
-                 CurrentFieldPlayerTarget = setupModel.CurrentFieldPlayerTarget
-                 SetFieldPlayerTarget = p.SetFieldPlayerTarget
+              {| TeamSetupData = detail
+                 SelectStarter = fun pid -> pid |> SelectStarter |> setupDispatch
+                 DeselectStarter = fun pid -> pid |> DeselectStarter |> setupDispatch
+                 SetFieldPlayerTarget = fun num -> num |> SetFieldPlayerTarget |> setupDispatch
                  onBack = fun () -> BackToSelection |> setupDispatch
-                 onStartGame = fun () ->
-                  let starterIds = detail.Starters |> List.map (fun p -> p.Id)
-                  let benchIds = detail.Bench |> List.map (fun p -> p.Id)
-                  p.StartNewGame (starterIds, benchIds) |}
-
+                 onStartGame = p.StartNewGame |}
       ]     
   ]

@@ -3,6 +3,7 @@ namespace BenchBossApp.Components.BenchBoss.GameSetupPage
 [<AutoOpen>]
 module Common =
   open Feliz
+  open BenchBossApp.Components.BenchBoss
 
   let PrimaryBadge (text: string)=
     Html.span [
@@ -102,17 +103,17 @@ module Common =
     ]
 
 
-  let Select (props:{| defaultValue: string; options: (string * string) list; onChange: string -> unit |} ) =
+  let Select (props:{| DefaultValue: string; Options: (string * string) list; OnChange: string -> unit |} ) =
     Html.div [
       Html.div [
         prop.className "mt-2 grid grid-cols-1"
         prop.children [
           Html.select [
-            prop.className "col-start-1 row-start-1 w-full appearance-none rounded-md bg-white py-1.5 pr-8 pl-3 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-purple-600 sm:text-sm/6 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:*:bg-gray-800 dark:focus-visible:outline-purple-500"
-            prop.defaultValue props.defaultValue
-            prop.onChange props.onChange
+            prop.className "col-start-1 row-start-1 w-full appearance-none rounded-md bg-white py-1.5 pr-8 pl-3 text-base text-purple-900 outline-1 -outline-offset-1 outline-gray-300 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-purple-600 sm:text-sm/6 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:*:bg-gray-800 dark:focus-visible:outline-purple-500"
+            prop.value props.DefaultValue
+            prop.onChange props.OnChange
             prop.children [
-              for value, label in props.options do
+              for value, label in props.Options do
                 Html.option [
                   prop.value value
                   prop.text label
@@ -124,7 +125,7 @@ module Common =
             svg.fill "currentColor"
             svg.custom ("data-slot", "icon")
             svg.custom ("aria-hidden", "true")
-            svg.className "pointer-events-none col-start-1 row-start-1 mr-2 size-5 self-center justify-self-end text-gray-500 sm:size-4 dark:text-gray-400"
+            svg.className "pointer-events-none col-start-1 row-start-1 mr-2 size-5 self-center justify-self-end text-purple-500 sm:size-4 dark:text-gray-400"
             svg.children [
               Svg.path [
                 svg.d "M4.22 6.22a.75.75 0 0 1 1.06 0L8 8.94l2.72-2.72a.75.75 0 1 1 1.06 1.06l-3.25 3.25a.75.75 0 0 1-1.06 0L4.22 7.28a.75.75 0 0 1 0-1.06Z"
@@ -136,3 +137,12 @@ module Common =
         ]
       ]
     ]
+
+  let movePlayer (sourceList: TeamPlayer list) (destinationList: TeamPlayer list) (playerId: PlayerId) =
+    match List.tryFind (fun (p: TeamPlayer) -> p.Id = playerId) sourceList with
+    | Some item ->
+      let newSource = List.filter (fun x -> x <> item) sourceList
+      let newDestination = item :: destinationList
+      newSource, newDestination
+    | None ->
+      sourceList, destinationList

@@ -6,6 +6,7 @@ module Component =
   open BenchBossApp.Components.BenchBoss.Types
   open BenchBossApp.Components.BenchBoss
   open Browser.Dom
+
   [<ReactComponent>]
   let Render () =
     let initialPage = Routing.currentPageFromUrl()
@@ -16,7 +17,6 @@ module Component =
 
     // Listen to future url changes (back/forward) via popstate
     React.useEffectOnce(fun () ->
-      Browser.Dom.console.log("Setting up popstate listener")
       let handler = fun (_:obj) ->
         let p = currentPageFromUrl()
         if p <> state.CurrentPage then dispatch (NavigateToPage p)
@@ -44,8 +44,7 @@ module Component =
               {| TeamPlayers = state.TeamPlayers;
                  FieldPlayerTarget = state.FieldPlayerTarget;
                  Cancel = fun () -> dispatch (NavigateToPage HomePage);
-                 SetFieldPlayerTarget = fun v -> dispatch (SetFieldPlayerTarget v);
-                 StartNewGame = fun (starting, bench) -> dispatch (StartNewGame (starting, bench)) |}
+                 StartNewGame = fun tsd -> dispatch (StartNewGame tsd) |}
          | HomePage -> HomePage.View state dispatch
          | NotFoundPage -> NotFoundPage.View dispatch
 

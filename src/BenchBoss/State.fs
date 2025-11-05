@@ -33,7 +33,6 @@ module State =
     }
 
   let init (initialPage: Page) =
-    Browser.Dom.console.log("Initializing state with page:", Page.toString initialPage)
     match Store.loadFromStorage validateState () with
     | Some stored -> { stored with CurrentPage = initialPage }, Cmd.ofMsg Tick // kick a tick to normalize
     | None -> { empty() with CurrentPage = initialPage }, Cmd.none
@@ -316,48 +315,37 @@ module State =
         }
       Store.save newState
       newState, Cmd.none
-    | SetFieldPlayerTarget target ->
-      let clamped = target |> max 4 |> min 11
-      // If reducing target, bench excess on-field players (choose by highest PlayedSeconds to bench first?)
-      let onFieldPlayers = state.Game.Players |> List.filter (fun p -> p.InGameStatus = OnField)
-      let excess = onFieldPlayers.Length - clamped
-      let updatedPlayers =
-        if excess > 0 then
-          let toBench =
-            onFieldPlayers
-            |> List.sortByDescending (fun p -> p.PlayedSeconds) // bench those who've played most to balance
-            |> List.take excess
-            |> List.map (fun p -> p.Id)
-            |> Set.ofList
-          state.Game.Players |> List.map (fun p -> if toBench.Contains p.Id then { p with InGameStatus = OnBench } else p)
-        else state.Game.Players
-      let newState = { state with FieldPlayerTarget = clamped; Game = { state.Game with Players = updatedPlayers } }
-      Store.save newState
-      newState, Cmd.none
-    | StartNewGame (starting, bench) ->
-      // Enforce FieldPlayerTarget at game start: if more starters are passed than allowed, overflow moves to bench.
-      let maxStarting = state.FieldPlayerTarget
-      let trimmedStarting, overflow =
-        if List.length starting > maxStarting then starting |> List.splitAt maxStarting else starting, []
-      // Combine provided bench with any overflow starters.
-      let combinedBench = bench @ overflow
-      let toGamePlayer status (tp:TeamPlayer) =
-        { Id = tp.Id; Name = tp.Name; InGameStatus = status; PlayedSeconds = 0; BenchedSeconds = 0 }
-      let startingSet = trimmedStarting |> Set.ofList
-      let benchSet = combinedBench |> Set.ofList
-      // Filter out any ids not in roster; remove duplicates and ensure no overlap.
-      let rosterIds = state.TeamPlayers |> List.map _.Id |> Set.ofList
-      let validStarting = startingSet |> Set.filter (fun id -> rosterIds.Contains id)
-      let validBench = benchSet |> Set.filter (fun id -> rosterIds.Contains id && not (validStarting.Contains id))
-      let gamePlayers =
-        state.TeamPlayers
-        |> List.choose (fun tp ->
-            if validStarting.Contains tp.Id then Some (toGamePlayer OnField tp)
-            elif validBench.Contains tp.Id then Some (toGamePlayer OnBench tp)
-            else None)
-      let newGame = { Game.create "Game" gamePlayers with Timer = Stopped }
-      let newState = { state with Game = newGame; OurScore = 0; OppScore = 0; Events = []; CurrentPage = GamePage; LastTick = None; CurrentModal = NoModal }
-      newState, Cmd.none
+
+    | StartNewGame teamSetupData ->
+
+      Browser.Dom.console.log "Starting new game with team setup data:"
+      Browser.Dom.console.log teamSetupData
+
+      let toGamePlayer = Map.toList >> List.map snd >> List.map GamePlayer.ofTeamPlayer
+
+      let startingPlayers = 
+        teamSetupData.OnField 
+        |> toGamePlayer
+        |> List.map (fun p -> { p with InGameStatus = OnField })
+
+      let benchPlayers =
+        teamSetupData.OnBench
+        |> toGamePlayer
+        |> List.map (fun p -> { p with InGameStatus = OnBench })
+
+      let newGame = Game.create "New Game" (startingPlayers @ benchPlayers)
+      let s1 =
+        { state with 
+            CurrentPage = GamePage
+            Game = newGame
+            FieldPlayerTarget = teamSetupData.MaxOnField
+            OurScore = 0
+            OppScore = 0
+            Events = []
+            LastTick = None
+            CurrentModal = NoModal
+        }
+      s1, Cmd.none
 
   let updateWithSave (msg: Msg) (state: State) : State * Cmd<Msg> =
     let newState, cmd = update msg state

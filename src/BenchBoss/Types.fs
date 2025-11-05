@@ -87,6 +87,70 @@ module Types =
     | Break of BreakTimerState
     | Stopped
 
+    type AddToFieldError = 
+    | FieldFull
+    | PlayerAlreadyOnField
+
+  type TeamSetupData = private  {
+    onField: Map<PlayerId, TeamPlayer>
+    onBench: Map<PlayerId, TeamPlayer>
+    maxOnField: int
+  }
+
+  with 
+    member this.OnField = this.onField
+    member this.OnBench = this.onBench
+    member this.MaxOnField = this.maxOnField
+
+  module TeamSetupData =
+    open FsToolkit.ErrorHandling
+    let create maxOnField selectedPlayers =
+      { onField = Map.empty
+        onBench = selectedPlayers
+        maxOnField = maxOnField }
+
+    let addToField (player: TeamPlayer) (team: TeamSetupData) = result {
+      let playerId = player.Id
+      if Map.containsKey playerId team.onField then
+        return! Error PlayerAlreadyOnField
+      else
+        let currentFieldSize = Map.count team.onField
+        if currentFieldSize >= team.maxOnField then
+          return! Error FieldFull
+        else
+          return
+            { team with 
+                onField = Map.add playerId player team.onField
+                onBench = Map.remove playerId team.onBench }
+    }
+
+    let addToBench (player: TeamPlayer) (team: TeamSetupData) =
+      let playerId = player.Id
+      { team with 
+          onField = Map.remove playerId team.onField
+          onBench = Map.add playerId player team.onBench }
+
+    let isFieldFull team =
+        Map.count team.onField >= team.maxOnField
+
+    let setMaxOnField newMax team =
+        // ensure we don't have more players on field than the new max
+      let adjustedOnField, adjustedOnBench =
+        if Map.count team.onField <= newMax then
+          team.onField, team.onBench
+        else
+          let onFieldList = Map.toList team.onField
+          let toKeep, toMove = List.splitAt newMax onFieldList
+          
+          let updatedOnField = Map.ofList toKeep
+          let updatedOnBench = 
+            (team.onBench, toMove)
+            ||> List.fold (fun acc (_, player) -> Map.add player.Id player acc)
+          
+          updatedOnField, updatedOnBench
+
+      { onField = adjustedOnField; onBench = adjustedOnBench; maxOnField = newMax }
+
   type Game = {
     Id: Guid
     Name: string
@@ -159,8 +223,7 @@ module Types =
     | ConfirmRemoveTeamPlayer of PlayerId
     | TogglePlayerGameAvailability of PlayerId
     | ResetGame
-    | StartNewGame of starting: PlayerId list * bench: PlayerId list
-    | SetFieldPlayerTarget of int
+    | StartNewGame of TeamSetupData
 
   module Constants =
     [<Literal>]

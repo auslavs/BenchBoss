@@ -10,12 +10,12 @@ module SelectPlayersPage =
   [<ReactComponent>]
   let Component (props:
     {| allPlayers: TeamPlayer list
-       selectedPlayers: TeamPlayer list
+       selectedPlayers: Map<PlayerId, TeamPlayer>
        togglePlayer: TeamPlayer -> unit
-       onContinue: TeamPlayer list -> unit |}) =
+       onContinue: Map<PlayerId, TeamPlayer> -> unit |}) =
 
     let selected = props.selectedPlayers
-    let notPlaying = props.allPlayers |> List.except selected
+    let notPlaying = props.allPlayers |> List.except (Map.values selected)
     let onContinue = props.onContinue
     let togglePlayer = props.togglePlayer
 
@@ -32,7 +32,7 @@ module SelectPlayersPage =
           prop.children [
             Html.div [
               prop.className "text-3xl text-purple-700"
-              prop.text (selected.Length |> string)
+              prop.text (Map.count selected |> string)
             ]
             Html.div [ prop.className "text-sm text-purple-600 mt-1"; prop.text "Players Selected" ]
           ]
@@ -51,20 +51,20 @@ module SelectPlayersPage =
                     Html.h3 [ prop.className "text-purple-700"; prop.text "Playing Today" ]
                   ]
                 ]
-                PrimaryBadge (string selected.Length)
+                PrimaryBadge (string (Map.count selected))
               ]
             ]
             Html.div [
               prop.className "space-y-2 bg-purple-50 rounded-xl p-3 border-2 border-purple-200"
               prop.children [
 
-                if selected.Length = 0 then
+                if Map.isEmpty selected then
                   Html.div [
                     prop.className "text-gray-600 py-4 text-center"
                     prop.text "No players selected"
                   ]
 
-                for player in selected do
+                for player in Map.values selected do
                   Html.div [
                     prop.key player.Id
                     prop.className "flex items-center justify-between p-3 bg-white rounded-lg cursor-pointer hover:bg-gray-50"
@@ -143,7 +143,7 @@ module SelectPlayersPage =
               prop.type'.button
               prop.className "w-full sm:w-auto h-14 px-6 py-3 bg-purple-600 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-purple-700 flex items-center justify-center"
               prop.text "Continue to Lineup"
-              prop.disabled (selected.Length = 0)
+              prop.disabled (Map.isEmpty selected)
               prop.onClick (fun _ -> onContinue selected)
               prop.title "Continue to lineup selection"
             ]
