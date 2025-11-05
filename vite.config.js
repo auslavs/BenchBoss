@@ -7,7 +7,7 @@ export default defineConfig(({ mode }) => {
     base: "/BenchBoss/",
     root: "./src",
     build: {
-      outDir: "../docs",
+      outDir: "../build",
       emptyOutDir: true,
       sourcemap: mode === "development",
     },
